@@ -16,8 +16,6 @@ group_metadata_bash <- function(metadata_split_path, path_base,
   # create shell script to expand groupings
   fileConn<-file(bash_file)
 
-
-
   ##########LEGACY
   # # Create a shell script
   # metadata_split_path %>% unlist() %>% unname() %>% paste0(python_function, ., ' \"', metadata_grouping, '\"') %>%
@@ -27,11 +25,10 @@ group_metadata_bash <- function(metadata_split_path, path_base,
       'pip install --user pandas', #ugly way of managing the dependency of the cellprofiler function
       .) %>%
     writeLines(., fileConn)
+  close(fileConn)
 
   #run system command to make it executable
   system(paste0("chmod +x ", bash_file))
 
-  #writeLines(c("Hello","World"), fileConn)
-  close(fileConn)
   print(paste0("Now you have to execute the bash file to group metadata: ", bash_file))
 }
