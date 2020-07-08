@@ -15,9 +15,6 @@ write_metadata_split <- function(df, name = "pc", path_base){
   parent = df$Metadata_parent %>% unique() %>% .[1]
   well = df$Metadata_well %>% unique()
 
-
-
-
   print("creating multiple .csv with metadata for each well")
   #splitting data by well using a custom function
   metadata_split_path <- df %>%

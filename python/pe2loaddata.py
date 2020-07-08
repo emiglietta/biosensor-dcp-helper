@@ -132,6 +132,7 @@ class Images(PEContentHandler):
         else:
             PEContentHandler.onEndElement(self, child, name)
 
+
 class Root(PEContentHandler):
     def __init__(self, parent, name, attrs):
         PEContentHandler.__init__(self, parent, name, attrs)
@@ -261,10 +262,11 @@ def main():
     else:
         for filename in os.listdir(options.index_directory):
             paths[filename] = options.index_directory
-
+    
     with open(options.output_csv, "wb") as fd:
         writer = csv.writer(fd, lineterminator='\n')
-        write_csv(writer, images, plates, wells, channels, metadata, paths)
+        write_csv2(writer, images, plates, wells, channels, metadata, paths)
+
 
 def write_csv(writer, images, plates, wells, channels, metadata, paths):
     logger = logging.getLogger(__name__)
@@ -320,6 +322,37 @@ def write_csv(writer, images, plates, wells, channels, metadata, paths):
                 row += [plate_name, well_name, str(int(field[:2]))]
                 for key in sorted(metadata.keys()):
                     row.append(image.metadata[key])
+                writer.writerow(row)
+                
+def write_csv2(writer, images, plates, wells, channels, metadata, paths):
+    logger = logging.getLogger(__name__)
+    header = ["Image_FileName", "Image_PathName"]
+    header += ["Metadata_Plate", "Metadata_Well", "Metadata_Site"]
+    header += ["_".join(("Metadata", metadata[key]))
+               for key in sorted(metadata.keys())]
+    header += ["Metadata_ChannelCPName"]
+    writer.writerow(header)
+    
+    for plate_name in sorted(plates):
+        plate = plates[plate_name]
+        for well_id in plate.well_ids:
+            well = wells[well_id]
+            well_name = well.well_name
+            for image_id in well.image_ids:
+                image = images[image_id]
+                file_name = image.metadata["URL"]
+                row = []
+                try:
+                    row += [file_name, paths[file_name]]
+                except:
+                    logger.debug("Channel = {}; Field = {}; Well = {}; Well_id = {}; Plate = {}".format(
+                            image.metadata.get('ChannelName'), image.metadata.get('FieldID'), well_name, well_id, plate_name))
+                if row == []:
+                    continue
+                row += [plate_name, well_name, image.metadata.get('FieldID')]
+                for key in sorted(metadata.keys()):
+                    row.append(image.metadata[key])
+                row.append(channels[str(image.metadata['ChannelName']).replace(" ","")])
                 writer.writerow(row)
 
 if __name__ == "__main__":

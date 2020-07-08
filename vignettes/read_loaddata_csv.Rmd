@@ -1,0 +1,65 @@
+---
+title: "Generate metadata for biosensor imaging pipeline"
+output: html_notebook
+---
+
+# Load libraries
+
+```{r}
+library(tidyverse)
+library(dcphelper)
+library(tictoc)
+```
+
+# Setting path variables
+
+```{r}
+
+plate_name = "000012105403__2020-01-24T15_44_50-Measurement_3"
+
+new_json_path_flat = "~/mcsaba/biosensor/src/dcp_helper/python/job_flatfield_template.json" #brightfield
+new_json_path_max = "~/mcsaba/biosensor/src/dcp_helper/python/job_maxproj_template.json" #flourescence channels
+new_json_path_seg = "~/mcsaba/biosensor/src/dcp_helper/python/job_segmentation_template.json" #
+
+channel_metadata_regexp <- c("ch1", "ch2", "ch3", "ch4")
+channel_abbreviation <- c("pc", "bf", "ce", "tm")
+
+new_path_base = paste0("~/mcsaba/biosensor/src/dcp_helper/metadata/", plate_name,"/") #relative path acceptable
+inbox_path_base= paste0("/home/ubuntu/bucket/inbox/", plate_name,"/Images/") #absolute path with /home/ubuntu/ required
+
+loaddata_csv_file <- paste0(new_path_base, "loaddata_output.csv")
+
+```
+
+# Loading data
+
+```{r}
+loaddata <- read.csv(loaddata_csv_file, stringsAsFactors=FALSE)
+```
+
+# Generate metadata
+
+## for brightfield projection
+
+```{r}
+brightfield_ffc_data <- loaddata %>%
+  filter(Metadata_ChannelCPName == "Brightfield") %>%
+  mutate( Metadata_TimepointID = Metadata_TimepointID+1 ) %>% # 0->1, 1->2
+  mutate( new_TimePoint = sprintf('sk%d', Metadata_TimepointID) ) %>%
+  mutate( new_Well = Metadata_Well ) %>%
+  mutate( new_Field = sprintf('f%02d', Metadata_FieldID) ) %>%
+  mutate( new_Channel = sprintf('ch%d', Metadata_ChannelID) ) %>%
+  mutate( new_Plane = sprintf('p%02d', Metadata_PlaneID) ) %>%
+  select( -contains('Metadata') ) %>% # drop original metadata
+  rename_at(vars(starts_with("new_")), funs(str_replace(., "new_", "Metadata_"))) %>% 
+  rename_at(vars(starts_with('Image_')), function(x) paste0(x,"_OrigBrightfield"))
+```
+```{r}
+brightfield_ffc_data %>%
+  split(., brightfield_ffc_data$Metadata_Well) #%>%
+  # TODO: add saving csv files
+```
+
+## for fluorescent projections
+
+## for segmentation
