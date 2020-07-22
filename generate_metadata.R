@@ -11,9 +11,14 @@ print(paste0("Processing plate ", plate_name))
 
 ################ Sometimes you also have to change these variables
 ## json templates
+# new_json_path_flat = "~/mcsaba/biosensor/src/dcp_helper/python/job_flatfield_template.json" #brightfield
+# new_json_path_max = "~/mcsaba/biosensor/src/dcp_helper/python/job_maxproj_template.json" #flourescence channels
+# new_json_path_seg = "~/mcsaba/biosensor/src/dcp_helper/python/job_segmentation_template.json" #
+
 new_json_path_flat = "~/dcp_helper/python/job_flatfield_template.json" #brightfield
 new_json_path_max = "~/dcp_helper/python/job_maxproj_template.json" #flourescence channels
 new_json_path_seg = "~/dcp_helper/python/job_segmentation_template.json" #
+
 
 ## Name of channels
 channel_v <- c("ch1", "ch2", "ch3", "ch4")
@@ -26,12 +31,15 @@ library(dcphelper)
 library(tictoc)
 
 ## Define paths
+
+flatfield_dir = "flatfield"
+
 new_path_base = paste0("~/dcp_helper/metadata/", plate_name,"/") #relative path acceptable
 inbox_path_base= paste0("/home/ubuntu/bucket/inbox/", plate_name,"/Images/") #absolute path with /home/ubuntu/ required
-flatfield_path_base= paste0("~/bucket/flatfield/", plate_name,"/") #deprecated: only used for result collection
+flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name,"/") #deprecated: only used for result collection
 
 ## Creating target dir
-lapply(new_path_base, dir.create) # Do not execute this from a local machine if you expect other AWS services to access the directory later on
+lapply(new_path_base, dir.create, recursive=TRUE) # Do not execute this from a local machine if you expect other AWS services to access the directory later on
 
 tic()
 #### Creating metadata directories
@@ -43,6 +51,7 @@ for(j in 1:length(inbox_path_base)){
     name = "pc",
     json_path = new_json_path, #not needed
     path_base = new_path_base[j],
+    flatfield_dir = flatfield_dir,
     force = FALSE,
     include_brightfield_proj = TRUE, # setting this value to FALSE will skip brightfield image analysis
     include_additional_proj = TRUE)
@@ -59,6 +68,7 @@ for(i in 2:length(channel_n)){
       name = channel_n[i],
       json_path = new_json_path, #not needed
       path_base = new_path_base[j],
+      flatfield_dir = flatfield_dir,
       force = FALSE)
   }
 }
