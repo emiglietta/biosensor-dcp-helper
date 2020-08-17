@@ -1,6 +1,11 @@
 #' Fill a JSON template with a specific metadata path and metadata groupings
 #'
-#' @param name
+#' @param metadata_split_path
+#' @param json_template
+#' @param json_path
+#' @param path_base Destination directory of job files
+#' @param flatfield_dir Directory for intemediate and final results
+#' @param path_to_metadata Directory containing metadata files
 #'
 #' @return
 #' @export
@@ -8,14 +13,18 @@
 #' @import parallel
 #'
 #' @examples
-link_data_file <- function(metadata_split_path, json_template, json_path, path_base,
+link_data_file <- function(metadata_split_path,
+                           json_template,
+                           json_path,
+                           path_base,
+                           flatfield_dir = "flatfield",
                            path_to_metadata = 'dcp_helper/metadata/'){
   json_new <- json_template #propably not needed
 
   json_new$data_file <- metadata_split_path %>% #str_sub(21, -1) #10, -1
     str_extract(pattern = paste0(path_to_metadata, "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d/.*"))
 
-  json_new$output <- paste0("flatfield/",
+  json_new$output <- paste0(flatfield_dir, "/",
                             str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d", string = metadata_split_path))
 
   # I create the path for the grouping data that was previously generated using a python script. #TODO - incorporate the python script's function into R

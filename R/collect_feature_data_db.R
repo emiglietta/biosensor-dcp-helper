@@ -1,8 +1,10 @@
 #' Collect Feature data after image analysis with cellprofiler
 #'
 #' @param path_data
+#' @param host_db
+#' @param result_path Path to collected measurements
 #' @param channel_of_interest
-#' @param measurment_of_interest
+#' @param measurement_of_interest
 #'
 #' @return
 #' @export
@@ -17,9 +19,8 @@
 collect_feature_data_db <- function(path_data,
                                     host_db = "biosensor.c9k2hfiwt5mi.us-east-2.rds.amazonaws.com",
                                     result_path = "~/dcp_helper/data/results/",
-
                                     channel_of_interest = "ch1",
-                                    measurment_of_interest = "measurment_IdentifySecondaryObjects.csv"){
+                                    measurement_of_interest = "measurement_IdentifySecondaryObjects.csv"){
   ## This function should not be run in parallel
   #file.copy(database, database_move, overwrite = FALSE)
   pool <- pool::dbPool(RPostgres::Postgres(),
@@ -31,7 +32,7 @@ collect_feature_data_db <- function(path_data,
 
   measurement_id <- path_data %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d")
   print("listing files")
-  files <- list.files(paste0(result_path, measurement_id), pattern = channel_of_interest, full.names = TRUE) %>% paste0(., "/", measurment_of_interest)
+  files <- list.files(paste0(result_path, measurement_id), pattern = channel_of_interest, full.names = TRUE) %>% paste0(., "/", measurement_of_interest)
 
   # I want to avoid saving data that is redundant. Therefore I want to remove every entry from the list of files, that has a matching id in the database
   # I pull the vector of ids in the database
@@ -42,7 +43,7 @@ collect_feature_data_db <- function(path_data,
 
   new_measurement = tibble(id_barcode = measurement_id %>% str_extract(pattern = "0000\\d+"),
          id_measurement = measurement_id,
-         id_observation = files %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d-...-f..-ch\\d")
+         id_observation = files %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
          ) %>%
     separate(id_observation, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_no", "iteration_no", "well", "field", "channel")) %>% select(-(t1:t3)) %>%
     mutate(measurement_no = str_extract(measurement_no, pattern = "\\d") %>% as.numeric(),

@@ -21,6 +21,7 @@ import logging
 import logging.config
 import IPython
 
+
 class PEContentHandler(xml.sax.ContentHandler):
     '''Ignore all content until endElement'''
     def __init__(self, parent, name, attrs):
@@ -70,6 +71,7 @@ class PEContentHandler(xml.sax.ContentHandler):
         channel = self.metadata["ChannelName"]
         return channel.replace(" ","")
 
+
 class Well(PEContentHandler):
     def __init__(self, parent, name, attrs):
         PEContentHandler.__init__(self, parent, name, attrs)
@@ -79,6 +81,7 @@ class Well(PEContentHandler):
         if name == "Image":
             self.image_ids.append(child.id)
         return PEContentHandler.onEndElement(self, child, name)
+
 
 class Wells(PEContentHandler):
     def __init__(self, parent, name, attrs):
@@ -95,6 +98,7 @@ class Wells(PEContentHandler):
             return Well
         return PEContentHandler.get_class_for_name(self, name)
 
+
 class Plate(PEContentHandler):
     def __init__(self, parent, name, attrs):
         PEContentHandler.__init__(self, parent, name, attrs)
@@ -105,6 +109,7 @@ class Plate(PEContentHandler):
             self.well_ids.append(child.id)
         else:
             PEContentHandler.onEndElement(self, child, name)
+
 
 class Plates(PEContentHandler):
     def __init__(self, parent, name, attrs):
@@ -120,6 +125,7 @@ class Plates(PEContentHandler):
     def get_class_for_name(self, name):
         if name == "Plate":
             return Plate
+
 
 class Images(PEContentHandler):
     def __init__(self, parent, name, attrs):
@@ -160,6 +166,7 @@ class Root(PEContentHandler):
         else:
             return PEContentHandler.get_class_for_name(self, name)
 
+
 class DocContentHandler(xml.sax.ContentHandler):
     def startDocument(self):
         self.root = None
@@ -182,6 +189,7 @@ class DocContentHandler(xml.sax.ContentHandler):
     def onEndElement(self, child, name):
         pass
 
+
 def check_file_arg(arg):
     '''Make sure the argument is a path to a file'''
     if not os.path.isfile(arg):
@@ -189,12 +197,14 @@ def check_file_arg(arg):
             "%s is not a path to an existing file" % arg)
     return arg
 
+
 def check_dir_arg(arg):
     '''Make sure the argument is a path to an existing directory'''
     if not os.path.isdir(arg):
         raise argparse.ArgumentTypeError(
             "%s is not a path to an existing directory" % arg)
     return arg
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -220,6 +230,7 @@ def parse_args():
         help = "The name of the LoadData .csv file to be created")
     return parser.parse_args()
 
+
 def load_config(config_file):
     '''Load the configuration from config.yaml'''
     with open(config_file, "r") as fd:
@@ -229,6 +240,7 @@ def load_config(config_file):
     channels = config['channels']
     metadata = config.get('metadata', {})
     return channels, metadata
+
 
 def main():
     import json
@@ -323,7 +335,8 @@ def write_csv(writer, images, plates, wells, channels, metadata, paths):
                 for key in sorted(metadata.keys()):
                     row.append(image.metadata[key])
                 writer.writerow(row)
-                
+
+
 def write_csv2(writer, images, plates, wells, channels, metadata, paths):
     logger = logging.getLogger(__name__)
     header = ["Image_FileName", "Image_PathName"]
@@ -354,6 +367,7 @@ def write_csv2(writer, images, plates, wells, channels, metadata, paths):
                     row.append(image.metadata[key])
                 row.append(channels[str(image.metadata['ChannelName']).replace(" ","")])
                 writer.writerow(row)
+
 
 if __name__ == "__main__":
     main()

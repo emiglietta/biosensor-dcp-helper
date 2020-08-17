@@ -1,16 +1,14 @@
 #' Title
 #'
 #' @param df
-#' @param path
-#' @param interactive
-#' @param interactive_path
 #' @param name
+#' @param path_base
 #'
 #' @return
 #' @export
 #'
 #' @examples
-write_metadata_split <- function(df, name = "pc", path_base){
+write_metadata_split <- function(df, name = "segmentation", path_base){
 
   parent = df$Metadata_parent %>% unique() %>% .[1]
   well = df$Metadata_well %>% unique()
