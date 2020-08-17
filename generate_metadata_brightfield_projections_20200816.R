@@ -252,7 +252,7 @@ toc()
 
 ## Name of channels
 channel_v <- c("ch1")
-channel_measurement_n <- c("measurement_ch1")
+channel_measurement_n <- c("measurement_ch3")
 
 ################ Creating feature extraction / measurements metadata (-> *.csv)
 
