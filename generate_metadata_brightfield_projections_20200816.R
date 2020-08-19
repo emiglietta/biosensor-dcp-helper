@@ -38,7 +38,7 @@ new_json_path_fluorescent_flatfield = "~/dcp_helper/python/job_fluorescent_flatf
 new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_template.json" #fluorescent projection
 
 new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json"
-new_json_path_featureextraction = "~/dcp_helper/python/job_featureextraction_template.json"
+new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_template.json"
 
 ################ This is where the execution starts
 
@@ -252,7 +252,8 @@ toc()
 
 ## Name of channels
 channel_v <- c("ch1")
-channel_measurement_n <- c("measurement_ch3")
+channel_measurement_n <- c("measurement_ch3_ch4")
+json_featureextraction_templates <- c(new_json_path_featureextraction_ch3_ch4)
 
 ################ Creating feature extraction / measurements metadata (-> *.csv)
 
@@ -266,7 +267,7 @@ for(i in 1:length(channel_v)){
     dplyr::filter(channel == channel_v[i]) %>%
     reformat_filelist() %>%
     rowwise() %>%
-    mutate(Image_ObjectsFileName_Cells = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch1")), "_segmentation.tiff"),
+    mutate(Image_ObjectsFileName_Cells = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, channel_v[i])), "_segmentation.tiff"),
            Image_ObjectsPathName_Cells = Image_PathName_brightfield %>%
               stringr::str_split(pattern = "/") %>%
               unlist() %>% .[c(1:4)] %>%
@@ -281,8 +282,16 @@ for(i in 1:length(channel_v)){
              append(flatfield_dir) %>%
              append(Metadata_parent) %>%
              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch3"))) %>%
+             paste(collapse = "/"),
+           Image_FileName_ch4 = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch4")), "_maxprojection.tiff") ,
+           Image_PathName_ch4 = Image_PathName_brightfield %>%
+             stringr::str_split(pattern = "/") %>%
+             unlist() %>% .[c(1:4)] %>%
+             append(flatfield_dir) %>%
+             append(Metadata_parent) %>%
+             append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch4"))) %>%
              paste(collapse = "/")) %>%
-              select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
+      select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
   # glimpse(file_ff)
   metadata_split_path <- write_metadata_split(file_ff, name = channel_measurement_n[i], path_base = new_path_base)
 }
@@ -311,7 +320,7 @@ for (i in 1:length(channel_measurement_n)){
   link_json_metadata(metadata_split_path = list.files(new_path_base, pattern = "metadata_", full.names = TRUE) %>%
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_measurement_n[i]),
-                     json_path = new_json_path_featureextraction,
+                     json_path = json_featureextraction_templates[i],
                      path_base = new_path_base)
 }
 toc()
