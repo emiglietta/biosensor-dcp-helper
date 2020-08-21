@@ -34,7 +34,7 @@ lapply(new_path_base, dir.create, recursive=TRUE) # Do not execute this from a l
 new_json_path_brightfield_flatfield = "~/dcp_helper/python/job_brightfield_flatfield_template.json" #brightfield FFC
 new_json_path_fluorescent_flatfield = "~/dcp_helper/python/job_fluorescent_flatfield_template.json" #fluorescent FFC
 
-# new_json_path_brightfield_projection = "~/dcp_helper/python/job_brightfield_projection_template.json" #fluorescent projection
+new_json_path_brightfield_projection = "~/dcp_helper/python/job_brightfield_projection_template.json" #fluorescent projection
 new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_template.json" #fluorescent projection
 
 new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json"
@@ -108,14 +108,14 @@ for(i in 1:length(channel_ffc_n)){
 toc()
 
 #==================================================#
-#              PHASE 2: projections                #
+#        PHASE 2.1: fluorescent projections        #
 #==================================================#
 
 # ## Name of channels
 channel_projection_v <- c("ch3", "ch4")
 channel_projection_n <- c("maximumprojection_ch3", "maximumprojection_ch4")
 json_projection_templates <- c(new_json_path_fluorescent_projection, new_json_path_fluorescent_projection)
-#
+
 # ################ Creating fluorescence projection metadata (-> *.csv)
 
 tic()
@@ -170,6 +170,124 @@ toc()
 
 ################ Grouping projection final job files
 
+tic()
+for(i in 1:length(channel_projection_n)){
+  group_jobs_bash(path_base = new_path_base,
+                  name = channel_projection_n[i],
+                  letter_row_interval = c(1:16),
+                  number_col_interval = c(1:24))
+}
+toc()
+
+#==================================================#
+#        PHASE 2.2: brightfield projections        #
+#==================================================#
+
+## Name of channels
+channel_projection_v <- c("ch2")
+channel_projection_n <- c("projection_ch2")
+json_projection_templates <- c(new_json_path_brightfield_projection)
+
+# ################ Creating brightfield projection metadata (-> *.csv)
+
+# tic()
+# print("Creating brightfield projection metadata with all planes")
+# for(i in 1:length(channel_projection_v)){
+#   file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
+#   file_ff <- file %>%
+#     dplyr::filter(channel == channel_projection_v[i]) %>%
+#     reformat_filelist() %>%
+#     rowwise() %>%
+#     mutate(Image_FileName_original = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, Metadata_zst, channel_projection_v[i])), "_flatfield_corrected.tiff"),
+#            Image_PathName_original = Image_PathName_brightfield %>%
+#              stringr::str_split(pattern = "/") %>%
+#              unlist() %>% .[c(1:4)] %>%
+#              append(flatfield_dir) %>%
+#              append(Metadata_parent) %>%
+#              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, channel_projection_v[i]))) %>%
+#              paste(collapse = "/") ) %>%
+#     select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
+#   metadata_split_path <- write_metadata_split(file_ff, name = channel_projection_n[i], path_base = new_path_base)
+# }
+# toc()
+
+## Plane subsets
+plane_format = "%02d"
+projection_subsets <- list(
+  resolution1 = lapply(seq(1,14,by=1), sprintf, fmt=plane_format),
+  resolution2 = lapply(seq(1,14,by=2), sprintf, fmt=plane_format),
+  resolution3 = lapply(seq(1,14,by=3), sprintf, fmt=plane_format),
+  resolution4 = lapply(seq(1,14,by=4), sprintf, fmt=plane_format),
+  middle3 = lapply(seq(5,7,by=1), sprintf, fmt=plane_format),
+  middle4 = lapply(seq(5,8,by=1), sprintf, fmt=plane_format),
+  middle5 = lapply(seq(4,8,by=1), sprintf, fmt=plane_format),
+  middle6 = lapply(seq(4,9,by=1), sprintf, fmt=plane_format)
+)
+
+for (name in names(projection_subsets)){
+  planes <- projection_subsets[[name]]
+
+  print(paste0("Creating brightfield projection metadata with ", name," planes"))
+  for(i in 1:length(channel_projection_v)){
+    file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
+    glimpse(file)
+    file_ff <- file %>%
+      dplyr::filter(channel == channel_projection_v[i]) %>%
+      dplyr::filter(zst %in% planes) %>%
+      reformat_filelist() %>%
+      rowwise() %>%
+      mutate(Image_FileName_original = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, Metadata_zst, channel_projection_v[i])), "_flatfield_corrected.tiff"),
+             Image_PathName_original = Image_PathName_brightfield %>%
+               stringr::str_split(pattern = "/") %>%
+               unlist() %>% .[c(1:4)] %>%
+               append(flatfield_dir) %>%
+               append(Metadata_parent) %>%
+               append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, channel_projection_v[i]))) %>%
+               paste(collapse = "/") ) %>%
+      mutate(Metadata_planesampling = name) %>% #TODO handle diffent subsets in pipeline or with bash script
+      select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
+    glimpse(file_ff)
+    metadata_split_path <- write_metadata_split(file_ff,
+                                                name = paste0(channel_projection_n[i], "_", name),
+                                                path_base = new_path_base)
+  }
+}
+
+################ Grouping feature extraction / measurements metadata (-> *create_group.sh, *.batch.txt)
+################ Aggregating information and executable file
+
+
+tic()
+print("Creating shell script for grouping")
+path <- c()
+path <- generate_group(plate_name,
+                       c(channel_projection_n),
+                       new_path_base,
+                       group_tag = "brightfieldprojection")
+print(path)
+print("Grouping data using python script")
+system(path)
+toc()
+
+################# (-> job*.json)
+
+tic()
+print("Generating job files with grouping")
+
+for (name in names(projection_subsets)){
+  planes <- projection_subsets[[name]]
+  for (i in 1:length(channel_projection_n)){
+      link_json_metadata(metadata_split_path = list.files(new_path_base, pattern = "metadata_", full.names = TRUE) %>%
+                           stringr::str_subset(pattern = ".csv") %>%
+                           stringr::str_subset(pattern = channel_projection_n[i]),
+                         json_path = json_projection_templates[i],
+                         path_base = new_path_base)
+  }
+}
+toc()
+
+# ################ Grouping projection final job files
+#
 tic()
 for(i in 1:length(channel_projection_n)){
   group_jobs_bash(path_base = new_path_base,
@@ -257,7 +375,7 @@ json_featureextraction_templates <- c(new_json_path_featureextraction_ch3_ch4)
 
 ################ Creating feature extraction / measurements metadata (-> *.csv)
 
-# NOTE: only ch3 added
+# NOTE: only ch3 and ch4 added
 
 tic()
 print("Creating feature extraction / measurements metadata")
@@ -292,12 +410,11 @@ for(i in 1:length(channel_v)){
              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch4"))) %>%
              paste(collapse = "/")) %>%
       select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
-  # glimpse(file_ff)
   metadata_split_path <- write_metadata_split(file_ff, name = channel_measurement_n[i], path_base = new_path_base)
 }
 toc()
 
-################ Grouping feature extraction / measurements metadata (-> *create_group.sh, *.batch.txt)
+################ Grouping feature extraction / measurements metadata (-> *create_group.sh, *batch.txt)
 ################ Aggregating information and executable file
 
 tic()
