@@ -48,7 +48,7 @@ new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextrac
 #         PHASE 1: flatfield correction            #
 #==================================================#
 
-## Name of channels
+# Name of channels
 channel_ffc_v <- c("ch2", "ch3", "ch4")
 channel_ffc_n <- c("ffc_brightfield", "ffc_ch3", "ffc_ch4")
 json_ffc_templates <- c(new_json_path_brightfield_flatfield, new_json_path_fluorescent_flatfield, new_json_path_fluorescent_flatfield)
@@ -113,7 +113,7 @@ toc()
 #        PHASE 2.1: fluorescent projections        #
 #==================================================#
 
-# ## Name of channels
+## Name of channels
 channel_projection_v <- c("ch3", "ch4")
 channel_projection_n <- c("maximumprojection_ch3", "maximumprojection_ch4")
 json_projection_templates <- c(new_json_path_fluorescent_projection, new_json_path_fluorescent_projection)
@@ -190,30 +190,9 @@ channel_projection_v <- c("ch2")
 channel_projection_n <- c("projection_ch2")
 json_projection_templates <- c(new_json_path_brightfield_projection)
 
-# ################ Creating brightfield projection metadata (-> *.csv)
+# # ################ Creating brightfield projection metadata (-> *.csv)
 
-# tic()
-# print("Creating brightfield projection metadata with all planes")
-# for(i in 1:length(channel_projection_v)){
-#   file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
-#   file_ff <- file %>%
-#     dplyr::filter(channel == channel_projection_v[i]) %>%
-#     reformat_filelist() %>%
-#     rowwise() %>%
-#     mutate(Image_FileName_original = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, Metadata_zst, channel_projection_v[i])), "_flatfield_corrected.tiff"),
-#            Image_PathName_original = Image_PathName_brightfield %>%
-#              stringr::str_split(pattern = "/") %>%
-#              unlist() %>% .[c(1:4)] %>%
-#              append(flatfield_dir) %>%
-#              append(Metadata_parent) %>%
-#              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, channel_projection_v[i]))) %>%
-#              paste(collapse = "/") ) %>%
-#     select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
-#   metadata_split_path <- write_metadata_split(file_ff, name = channel_projection_n[i], path_base = new_path_base)
-# }
-# toc()
-
-## Plane subsets
+# Plane subsets
 plane_format = "%02d"
 projection_subsets <- list(
   resolution1 = lapply(seq(1,14,by=1), sprintf, fmt=plane_format),
@@ -265,7 +244,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
-                       group_tag = "brightfieldprojection")
+                       group_tag = "brightfieldprojection",
+                       group_template_file="group_template_subsampling.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -302,7 +282,6 @@ toc()
 #==================================================#
 #             PHASE 3: segmentation                #
 #==================================================#
-
 
 # Name of channels
 channel_v <- c("ch1")
@@ -370,7 +349,7 @@ toc()
 #   PHASE 4.1: fluorescent feature extraction / measurements     #
 #================================================================#
 
-## Name of channels
+# Name of channels
 channel_v <- c("ch1")
 channel_measurement_n <- c("measurement_ch3_ch4")
 json_featureextraction_templates <- c(new_json_path_featureextraction_ch3_ch4)
@@ -387,13 +366,13 @@ for(i in 1:length(channel_v)){
     dplyr::filter(channel == channel_v[i]) %>%
     reformat_filelist() %>%
     rowwise() %>%
-    mutate(Image_ObjectsFileName_Cells = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, channel_v[i])), "_segmentation.tiff"),
+    mutate(Image_ObjectsFileName_Cells = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch1")), "_segmentation.tiff"),
            Image_ObjectsPathName_Cells = Image_PathName_brightfield %>%
               stringr::str_split(pattern = "/") %>%
               unlist() %>% .[c(1:4)] %>%
               append(flatfield_dir) %>%
               append(Metadata_parent) %>%
-              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, channel_v[i]))) %>%
+              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch1"))) %>%
               paste(collapse = "/"),
            Image_FileName_ch3 = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch3")), "_maxprojection.tiff") ,
            Image_PathName_ch3 = Image_PathName_brightfield %>%
@@ -425,7 +404,7 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction")
+                       group_tag = "featureextraction_ch3_ch4")
 print(path)
 print("Grouping data using python script")
 system(path)
