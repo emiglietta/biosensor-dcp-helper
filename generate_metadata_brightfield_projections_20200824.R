@@ -45,6 +45,12 @@ new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextrac
 ################ This is where the execution starts
 
 #==================================================#
+#       PHASE 0: initiate metadata dataframe       #
+#==================================================#
+
+loaddata_output <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
+
+#==================================================#
 #         PHASE 1: flatfield correction            #
 #==================================================#
 
@@ -58,10 +64,9 @@ json_ffc_templates <- c(new_json_path_brightfield_flatfield, new_json_path_fluor
 print("Creating flatfield correction metadata")
 tic()
 for(i in 1:length(channel_ffc_n)){
-  file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
-  file_f <- file %>%
-    dplyr::filter(channel == channel_ffc_v[i])
-  file_ff <- file_f %>% reformat_filelist() %>%
+  file_ff <- loaddata_output %>%
+    dplyr::filter(channel == channel_ffc_v[i]) %>%
+    reformat_filelist() %>%
     rename(Image_PathName_original = Image_PathName_brightfield,
            Image_FileName_original = Image_FileName_brightfield)
   metadata_split_path <- write_metadata_split(file_ff, name = channel_ffc_n[i], path_base = new_path_base)
@@ -123,8 +128,7 @@ json_projection_templates <- c(new_json_path_fluorescent_projection, new_json_pa
 tic()
 print("Creating fluorescence projection metadata")
 for(i in 1:length(channel_projection_v)){
-  file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
-  file_ff <- file %>%
+  file_ff <- loaddata_output %>%
     dplyr::filter(channel == channel_projection_v[i]) %>%
     reformat_filelist() %>%
     rowwise() %>%
@@ -210,9 +214,7 @@ for (subset_name in names(projection_subsets)){
 
   print(paste0("Creating brightfield projection metadata with ", subset_name," planes"))
   for(i in 1:length(channel_projection_v)){
-    file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
-    glimpse(file)
-    file_ff <- file %>%
+    file_ff <- loaddata_output %>%
       dplyr::filter(channel == channel_projection_v[i]) %>%
       dplyr::filter(zst %in% planes) %>%
       reformat_filelist() %>%
@@ -227,7 +229,6 @@ for (subset_name in names(projection_subsets)){
                paste(collapse = "/") ) %>%
       mutate(Metadata_planesampling = subset_name) %>% #TODO handle diffent subsets in pipeline or with bash script
       select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
-    glimpse(file_ff)
     metadata_split_path <- write_metadata_split(file_ff,
                                                 name = paste0(channel_projection_n[i], "_", subset_name),
                                                 path_base = new_path_base)
@@ -293,8 +294,7 @@ json_segmentation_templates = c(new_json_path_segmentation)
 tic()
 print("Creating segmentation metadata")
 for(i in 1:length(channel_segmentation_n)){
-  file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
-  file_ff <- file %>%
+  file_ff <- loaddata_output %>%
     dplyr::filter(channel == channel_v[i]) %>%
     reformat_filelist() %>%
     rowwise() %>%
@@ -361,8 +361,7 @@ json_featureextraction_templates <- c(new_json_path_featureextraction_ch3_ch4)
 tic()
 print("Creating feature extraction / measurements metadata")
 for(i in 1:length(channel_v)){
-  file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
-  file_ff <- file %>%
+  file_ff <- loaddata_output %>%
     dplyr::filter(channel == channel_v[i]) %>%
     reformat_filelist() %>%
     rowwise() %>%
@@ -439,7 +438,7 @@ toc()
 #================================================================#
 
 # Name of channels
-channel_measurement_v <- c("ch2")
+channel_measurement_v <- c("ch1")
 channel_measurement_n <- c("measurement_ch2")
 json_featureextraction_templates <- c(new_json_path_featureextraction_ch2)
 
@@ -450,11 +449,8 @@ for (subset_name in names(projection_subsets)){
 
   print(paste0("Creating brightfield feature extraction metadata with ", subset_name," planes"))
   for(i in 1:length(channel_measurement_v)){
-    file <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base)
-    glimpse(file)
-    file_ff <- file %>%
+    file_ff <- loaddata_output %>%
       dplyr::filter(channel == channel_measurement_v[i]) %>%
-      dplyr::filter(zst %in% planes) %>%
       reformat_filelist() %>%
       rowwise() %>%
       mutate(Metadata_planesampling = subset_name) %>% #TODO handle diffent subsets in pipeline or with bash script
@@ -507,7 +503,6 @@ for (subset_name in names(projection_subsets)){
                append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch2"))) %>%
                paste(collapse = "/")) %>%
       select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
-    glimpse(file_ff)
     metadata_split_path <- write_metadata_split(file_ff,
                                                 name = paste0(channel_measurement_n[i], "_", subset_name),
                                                 path_base = new_path_base)
