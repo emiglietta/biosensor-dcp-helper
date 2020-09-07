@@ -15,7 +15,8 @@ reformat_filelist <- function(df){
                   Metadata_zst = zst,
                   Metadata_channel = channel,
                   Metadata_parent = parent,
-                  Metadata_timepoint = timepoint) %>%
+                  Metadata_timepoint = timepoint,
+                  Metadata_abstime = abstime) %>%
     #I keep the original file name
     mutate(Metadata_original = Image_FileName_brightfield) %>%
     #For stability, I add a letter in front of the field object
@@ -37,6 +38,7 @@ reformat_filelist <- function(df){
                   Metadata_original,
                   Metadata_zst,
                   Metadata_timepoint,
+                  Metadata_abstime,
                   Metadata_well) %>%
     return()
 }

@@ -19,6 +19,7 @@ extract_filelist <- function(path = getwd(), force, path_base){
       mutate(zst = sprintf("%02d", n_zst)) %>%
       mutate(fld = sprintf("%02d", fld)) %>%
       rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",timepoint+1)) %>%
+      rename(abstime = Metadata_AbsTime) %>%
       rename(ext = type) %>%
       mutate(name = paste0(Image_PathName, file_name)) %>%
       select(-contains("Metadata_")) %>%
