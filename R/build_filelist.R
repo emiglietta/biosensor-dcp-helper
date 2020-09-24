@@ -12,7 +12,7 @@
 #' @import reticulate
 #'
 #' @examples
-build_filelist <- function(path, force, path_base){
+build_filelist <- function(path, force, path_base, path_yml="~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config.yml"){
   # path mus be with trailing backslash
   parent <- path %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-2]
 
@@ -25,7 +25,7 @@ build_filelist <- function(path, force, path_base){
     system(paste("python2",
                  "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata.py",
                  paste0("--index-directory=", path),
-                 "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config.yml",
+                 path_yml,
                  paste0(path_base, "loaddata_output.csv") ) )
   }
   print("Reading file list")

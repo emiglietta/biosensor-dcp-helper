@@ -8,8 +8,8 @@
 #'
 #' @examples
 #'
-extract_filelist <- function(path = getwd(), force, path_base){
-   file <- build_filelist(path, force, path_base) %>%
+extract_filelist <- function(path = getwd(), force, path_base, path_yml="~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config.yml"){
+   file <- build_filelist(path, force, path_base, path_yml) %>%
       #I keep only tiff files
       separate(Image_FileName, c("file_name", "type"), sep = "\\.") %>%
       mutate(is_image = grepl(pattern = "tiff", x = type)) %>% filter(is_image == TRUE) %>%
