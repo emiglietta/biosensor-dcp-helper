@@ -9,7 +9,7 @@
 #' @export
 #'
 #' @examples
-generate_group <- function(plate_name, channel_n, path_base, group_tag="all"){
+generate_group <- function(plate_name, channel_n, path_base, group_tag="all", group_template_file="group_template.txt"){
 
   # expanding combinations
   df <- expand.grid(plate_name, channel_n) %>%
@@ -25,7 +25,7 @@ generate_group <- function(plate_name, channel_n, path_base, group_tag="all"){
     paste("python",
       "~/dcp_helper/python/ManualMetadata_dir.py",
       paste0("/home/ubuntu/dcp_helper/metadata/", df$plate_name, "/"),
-      read_lines("group_template.txt"),
+      read_lines(group_template_file),
       df$channel_n)
   ) %>%
     write_lines(fileConn)

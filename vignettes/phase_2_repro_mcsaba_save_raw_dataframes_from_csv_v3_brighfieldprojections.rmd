@@ -27,6 +27,7 @@ library(patchwork)
 library(janitor)
 library(platetools)
 library(viridis)
+library(purrr)
 
 # database
 # library(RPostgres)
@@ -35,7 +36,7 @@ library(viridis)
 # library(DBI)
 
 library(here)
-# library(googlesheets4)
+library(googlesheets4)
 
 library(dcphelper)
 ```
@@ -64,7 +65,11 @@ measurement_list = list()
 
 for (measurement_id in measurement_ids){
   
-  files <- list.files(paste0(result_path, measurement_id), pattern = channel_of_interest, full.names = TRUE) %>% paste0(., "/", measurement_of_interest_ch3_ch4)
+  files <- list.files(paste0(result_path, measurement_id), pattern = channel_of_interest, full.names = TRUE) %>%
+    compact(.) %>%
+    paste0(., "/", measurement_of_interest_ch3_ch4)
+  print(list.files(paste0(result_path, measurement_id), pattern = channel_of_interest, full.names = TRUE) %>%
+    compact(.) )
 
   measurement_list[[measurement_id]] <- tibble(
     id_barcode = measurement_id %>% str_extract(pattern = "0000\\d+"),
@@ -157,7 +162,10 @@ write_csv(plate_anno, here::here("data/annotation/cclf_ascites_20200630_human_re
 
 ```{r, message=FALSE}
 # Reading the compound submission file but ignoring the manual ID
-plate_anno <- read_delim(here::here("data/annotation/000012106403_layout.tsv"), "\t", escape_double = FALSE, trim_ws = TRUE)
+# plate_anno <- read_sheet("https://docs.google.com/spreadsheets/d/1m_ZIterCCciUmneBVroE2LPdI_oLFmXeaURxGB-Jxjc/edit?usp=sharing")
+gs4_deauth()
+plate_anno <- read_sheet("1m_ZIterCCciUmneBVroE2LPdI_oLFmXeaURxGB-Jxjc")
+# plate_anno <- read_delim(here::here("data/annotation/000012106403_layout.tsv"), "\t", escape_double = FALSE, trim_ws = TRUE)
 names(plate_anno) <- tolower(names(plate_anno))
 
 plate_anno <- plate_anno %>%
@@ -213,18 +221,18 @@ raw_map(data = as.character(plate_anno$cd45_depletion),
 #     dbWriteTable(pool, "measurement", ., append = TRUE)
 
 print("Writing observations")
-observation <- measurement %>%
-  unite("observation", contains("observation"), sep = "___") %>%
-  mutate(data = furrr::future_map2(observation, full_path, ~ {read_csv(.y) %>%
-                                     janitor::clean_names() %>%
-                                     mutate(observation = .x) %>%
-                                     separate(observation, c("id_observation", "id_observation_checksum"), sep = "___")}))
+# observation <- measurement %>%
+#   unite("observation", contains("observation"), sep = "___") %>%
+#   mutate(data = furrr::future_map2(observation, full_path, ~ {read_csv(.y) %>%
+#                                      janitor::clean_names() %>%
+#                                      mutate(observation = .x) %>%
+#                                      separate(observation, c("id_observation", "id_observation_checksum"), sep = "___")}))
 
-# observation2 <- lapply(files, read.delim)
-# read_csv_with_metadata <- function(metadata_row){
-#   read_csv(metadata_row$full_path) %>%
-#     cbind(metadata_row)
-# }
+observation2 <- lapply(measurement, read.delim)
+read_csv_with_metadata <- function(metadata_row){
+  read_csv(metadata_row$full_path) %>%
+    cbind(metadata_row)
+}
 # # 
 # observation3 <- measurement %>%
 #   unite("observation", contains("observation"), sep = "___") %>%
