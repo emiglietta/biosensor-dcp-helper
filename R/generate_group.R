@@ -24,7 +24,7 @@ generate_group <- function(plate_name, channel_n, path_base, group_tag="all", gr
     'pip install --user pandas', #ugly way of managing the dependency of the cellprofiler function
     paste("python",
       "~/dcp_helper/python/ManualMetadata_dir.py",
-      paste0("/home/ubuntu/dcp_helper/metadata/", df$plate_name, "/"),
+      path_base,
       read_lines(group_template_file),
       df$channel_n)
   ) %>%
