@@ -23,10 +23,11 @@ flatfield_dir = "flatfield"
 
 new_path_base = paste0("~/dcp_helper/metadata/", plate_name,"/") #relative path acceptable
 inbox_path_base= paste0("/home/ubuntu/bucket/inbox/", plate_name,"/Images/") #absolute path with /home/ubuntu/ required
-# flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name,"_subsampling/") #deprecated: only used for result collection
+#flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name,"_subsampling/") #deprecated: only used for result collection
+flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name)
 
-path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_999999990000.yml"
-# path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_000012106803.yml"
+#path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_999999990000.yml"
+path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_000012109703.yml"
 
 ################ Creating target dir
 
@@ -37,22 +38,22 @@ lapply(new_path_base, dir.create, recursive=TRUE) # Do not execute this from a l
 # All json templates are available in fork csmolnar/dcp_helper
 
 # READY
-# new_json_path_brightfield_flatfield = "~/dcp_helper/python/job_brightfield_flatfield_template.json" #brightfield FFC
-# new_json_path_fluorescent_flatfield = "~/dcp_helper/python/job_fluorescent_flatfield_template.json" #fluorescent FFC
+new_json_path_brightfield_flatfield = "~/dcp_helper/python/job_brightfield_flatfield_template.json" #brightfield FFC
+new_json_path_fluorescent_flatfield = "~/dcp_helper/python/job_fluorescent_flatfield_template.json" #fluorescent FFC
 
 # TO REPRODUCE
 new_json_path_brightfield_projection = "~/dcp_helper/python/job_brightfield_projection_template.json" #fluorescent projection
-# new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_template.json" #fluorescent projection, all planes
+new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_template.json" #fluorescent projection, all planes
 new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_downsampling_template.json" #fluorescent projection, downsampling
 
 # READY
-# new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json"
+new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json"
 
 # TO REPRODUCE
 new_json_path_featureextraction_ch2 = "~/dcp_helper/python/job_featureextraction_ch2_template.json"
-# new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_template.json"
+new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_template.json"
 new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_downsampled_template.json"
-# new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_template.json"
+new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_template.json"
 new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_downsampled_template.json"
 
 ################ This is where the execution starts
@@ -65,9 +66,31 @@ writeLines(c("Start time: ", start.time), fileConn)
 #       PHASE 0: initiate metadata dataframe       #
 #==================================================#
 
-loaddata_output_old = extract_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml )
+# loaddata_output = extract_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml )
 loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml ) %>%
-  separate(Metadata_ChannelCPName, c("Metadata_ChannelCPName", "Metadate_PlaneID"), '_')
+   separate(Metadata_ChannelCPName, c("Metadata_ChannelCPName", "Metadata_PlaneID"), '_') %>%
+   transform(., Metadata_PlaneID = as.numeric(Metadata_PlaneID)) %>%
+   replace_na(list(Metadate_PlaneID = 0)) %>%
+   mutate(Metadata_ChannelID = case_when(
+     Metadata_ChannelCPName == "PhaseContrast" ~ 1,
+     Metadata_ChannelCPName == "Brightfield" ~ 2,
+     Metadata_ChannelCPName == "Ch3" ~ 3,
+     Metadata_ChannelCPName == "Ch4" ~ 4,
+     Metadata_ChannelCPName == "Ch5" ~ 5,
+     Metadata_ChannelCPName == "Ch6" ~ 6
+   )) %>%
+   mutate(channel = paste0('ch', Metadata_ChannelID)) %>%
+   separate(Image_FileName, c("file_name", "type"), sep = "\\.") %>%
+   mutate(is_image = grepl(pattern = "tiff", x = type)) %>% filter(is_image == TRUE) %>%
+   rename(row = Metadata_Row, col = Metadata_Col, fld = Metadata_FieldID, n_zst = Metadata_PlaneID, well = Metadata_Well) %>%
+   mutate(zst = sprintf("%02d", n_zst)) %>%
+   mutate(fld = sprintf("%02d", fld)) %>%
+   rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",timepoint+1)) %>%
+   rename(abstime = Metadata_AbsTime) %>%
+   rename(ext = type) %>%
+   mutate(name = paste0(Image_PathName, file_name)) %>%
+   select(-contains("Metadata_")) %>%
+   mutate(parent = inbox_path_base %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-2])
 
 print(colnames(loaddata_output))
 loaddata.finish.time <- Sys.time()
@@ -77,12 +100,16 @@ writeLines(c("Loaddata finished:", loaddata.finish.time), fileConn)
 #         PHASE 1: flatfield correction            # # DONE #
 #==================================================#
 
-if (FALSE){
+# if (FALSE){
 
 # Name of channels
 channel_ffc_v <- c("ch2", "ch3", "ch4", "ch5", "ch6")
 channel_ffc_n <- c("ffc_brightfield", "ffc_ch3", "ffc_ch4", "ffc_ch5", "ffc_ch6")
-json_ffc_templates <- c(new_json_path_brightfield_flatfield, new_json_path_fluorescent_flatfield, new_json_path_fluorescent_flatfield, new_json_path_fluorescent_flatfield, new_json_path_fluorescent_flatfield)
+json_ffc_templates <- c(new_json_path_brightfield_flatfield,
+                        new_json_path_fluorescent_flatfield,
+                        new_json_path_fluorescent_flatfield,
+                        new_json_path_fluorescent_flatfield,
+                        new_json_path_fluorescent_flatfield)
 
 ################ Creating flatfield correction metadata (-> *.csv)
 
@@ -138,7 +165,7 @@ for(i in 1:length(channel_ffc_n)){
                   number_col_interval = c(1:24))
 }
 toc()
-} # end ffc section
+# end ffc section
 
 ffc.finish.time <- Sys.time()
 writeLines(c("FFC finished:", ffc.finish.time), fileConn)
@@ -150,7 +177,10 @@ writeLines(c("FFC finished:", ffc.finish.time), fileConn)
 ## Name of channels
 channel_projection_v <- c("ch3", "ch4", "ch5", "ch6")
 channel_projection_n <- c("maximumprojection_ch3", "maximumprojection_ch4", "maximumprojection_ch5", "maximumprojection_ch6")
-json_projection_templates <- c(new_json_path_fluorescent_projection, new_json_path_fluorescent_projection, new_json_path_fluorescent_projection, new_json_path_fluorescent_projection)
+json_projection_templates <- c(new_json_path_fluorescent_projection,
+                               new_json_path_fluorescent_projection,
+                               new_json_path_fluorescent_projection,
+                               new_json_path_fluorescent_projection)
 
 # Plane subsets
 plane_format = "%02d"
@@ -163,10 +193,10 @@ projection_subsets <- list(
   # middle4 = lapply(seq(5,8,by=1), sprintf, fmt=plane_format),
   # middle5 = lapply(seq(4,8,by=1), sprintf, fmt=plane_format),
   # middle6 = lapply(seq(4,9,by=1), sprintf, fmt=plane_format)
-  mid123 = lapply(seq(1,3,by=1), sprintf, fmt=plane_format),
-  mid234 = lapply(seq(2,4,by=1), sprintf, fmt=plane_format),
-  mid345 = lapply(seq(3,5,by=1), sprintf, fmt=plane_format),
-  mid456 = lapply(seq(4,6,by=1), sprintf, fmt=plane_format),
+  # mid123 = lapply(seq(1,3,by=1), sprintf, fmt=plane_format),
+  # mid234 = lapply(seq(2,4,by=1), sprintf, fmt=plane_format),
+  # mid345 = lapply(seq(3,5,by=1), sprintf, fmt=plane_format),
+  # mid456 = lapply(seq(4,6,by=1), sprintf, fmt=plane_format),
   mid246 = lapply(seq(2,6,by=2), sprintf, fmt=plane_format)
 )
 
@@ -212,7 +242,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
-                       group_tag = "projection")
+                       group_tag = "projection",
+                       group_template_file="group_template_subsampling.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -257,8 +288,10 @@ json_projection_templates <- c(new_json_path_brightfield_projection)
 # Plane subsets
 plane_format = "%02d"
 projection_subsets <- list(
+  resolution1 = lapply(seq(0,8,by=1), sprintf, fmt=plane_format), # 999999990000 only
+  resolution2 = lapply(seq(0,8,by=2), sprintf, fmt=plane_format)#, 999999990000 only
   # resolution1 = lapply(seq(1,14,by=1), sprintf, fmt=plane_format)#,
-  resolution2 = lapply(seq(1,10,by=2), sprintf, fmt=plane_format)#,
+  # resolution2 = lapply(seq(1,10,by=2), sprintf, fmt=plane_format)#,
   # resolution3 = lapply(seq(1,14,by=3), sprintf, fmt=plane_format),
   # resolution4 = lapply(seq(1,14,by=4), sprintf, fmt=plane_format),
   # middle3 = lapply(seq(5,7,by=1), sprintf, fmt=plane_format),
@@ -345,7 +378,7 @@ writeLines(c("Projection finished:", projection.finish.time), fileConn)
 #             PHASE 3: segmentation                #
 #==================================================#
 
-if (FALSE){
+#if (FALSE){
 
 # Name of channels
 channel_v <- c("ch1")
@@ -408,7 +441,7 @@ for(i in 1:length(channel_segmentation_n)){
 }
 toc()
 
-} # end segmentation section
+#} # end segmentation section
 
 segmentation.finish.time <- Sys.time()
 writeLines(c("Segmentation finished:", segmentation.finish.time), fileConn)
@@ -492,7 +525,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch3_ch4")
+                       group_tag = "featureextraction_ch3_ch4",
+                       group_template_file="group_template_subsampling.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -586,7 +620,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "measurement_ch5_ch6")
+                       group_tag = "featureextraction_ch5_ch6",
+                       group_template_file="group_template_subsampling.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -743,7 +778,7 @@ measurement.finish.time <- Sys.time()
 writeLines(c("Measurement finished:", measurement.finish.time), fileConn)
 
 ################ Pushing metadata to S3 bucket
-# system("./sync_metadata_to_bucket.sh") # TODO: prepare sync metadata script for the new plates only
+system("./sync_metadata_to_bucket.sh") # TODO: prepare sync metadata script for the new plates only
 
 
 upload.finish.time <- Sys.time()

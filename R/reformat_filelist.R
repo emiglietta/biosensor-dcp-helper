@@ -20,7 +20,7 @@ reformat_filelist <- function(df){
     #I keep the original file name
     mutate(Metadata_original = Image_FileName_brightfield) %>%
     #For stability, I add a letter in front of the field object
-    #CAVE: The script did not introduce this cahnge - start looking for errors here
+    #CAVE: The script did not introduce this change - start looking for errors here
     mutate(Metadata_fld = paste0("f", Metadata_fld)) %>%
     mutate(Metadata_zst = paste0("p", Metadata_zst)) %>%
     #change the path name

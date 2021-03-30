@@ -16,7 +16,7 @@ build_filelist <- function(path, force, path_base, path_yml="~/mcsaba/biosensor/
   # path mus be with trailing backslash
   parent <- path %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-2]
 
-  if(file.exists(paste0(path_base, "loaddata_output.csv")) & force == FALSE){
+  if (file.exists(paste0(path_base, "loaddata_output.csv")) & force == FALSE){
     print("Found file list")
   } else {
     # TODO: re-add code if Index.idx.xml does not exist
@@ -28,6 +28,7 @@ build_filelist <- function(path, force, path_base, path_yml="~/mcsaba/biosensor/
                  path_yml,
                  paste0(path_base, "loaddata_output.csv") ) )
   }
+
   print("Reading file list")
   dir_content <- readr::read_csv(paste0(path_base, "loaddata_output.csv"), col_types = cols()) %>%
     dplyr::mutate(file_path = paste(path))
