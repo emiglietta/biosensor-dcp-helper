@@ -22,10 +22,10 @@ link_data_file <- function(metadata_split_path,
   json_new <- json_template #propably not needed
 
   json_new$data_file <- metadata_split_path %>% #str_sub(21, -1) #10, -1
-    str_extract(pattern = paste0(path_to_metadata, "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d/.*"))
+    str_extract(pattern = paste0(path_to_metadata, "\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d/.*"))
 
   json_new$output <- paste0(flatfield_dir, "/",
-                            str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d", string = metadata_split_path))
+                            str_extract(pattern = "\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d", string = metadata_split_path))
 
   # I create the path for the grouping data that was previously generated using a python script. #TODO - incorporate the python script's function into R
   grouping_path <-  metadata_split_path %>% str_sub(.,1, -5) %>% paste0(., "batch.txt")

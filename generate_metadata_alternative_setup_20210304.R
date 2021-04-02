@@ -12,7 +12,8 @@ format_output_structure <- function(metadata_tags){
   paste0(metadata_tags, collapse = "-")
 }
 
-plate_name = args = commandArgs(trailingOnly=TRUE)
+# plate_name = args = commandArgs(trailingOnly=TRUE)
+plate_name = "000012109703__2021-03-26T07_02_12-Measurement_3"
 # for debugging only
 #plate_name = "000012095203__2019-12-09T17_58_26-Measurement_1"
 print(paste0("Processing plate ", plate_name))
@@ -43,7 +44,7 @@ new_json_path_fluorescent_flatfield = "~/dcp_helper/python/job_fluorescent_flatf
 
 # TO REPRODUCE
 new_json_path_brightfield_projection = "~/dcp_helper/python/job_brightfield_projection_template.json" #fluorescent projection
-new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_template.json" #fluorescent projection, all planes
+# new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_template.json" #fluorescent projection, all planes
 new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_downsampling_template.json" #fluorescent projection, downsampling
 
 # READY
@@ -55,6 +56,8 @@ new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextrac
 new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_downsampled_template.json"
 new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_template.json"
 new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_downsampled_template.json"
+
+
 
 ################ This is where the execution starts
 
@@ -83,7 +86,7 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    separate(Image_FileName, c("file_name", "type"), sep = "\\.") %>%
    mutate(is_image = grepl(pattern = "tiff", x = type)) %>% filter(is_image == TRUE) %>%
    rename(row = Metadata_Row, col = Metadata_Col, fld = Metadata_FieldID, n_zst = Metadata_PlaneID, well = Metadata_Well) %>%
-   mutate(zst = sprintf("%02d", n_zst)) %>%
+   mutate(zst = sprintf("%02d", n_zst+2)) %>%
    mutate(fld = sprintf("%02d", fld)) %>%
    rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",timepoint+1)) %>%
    rename(abstime = Metadata_AbsTime) %>%
@@ -92,9 +95,45 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    select(-contains("Metadata_")) %>%
    mutate(parent = inbox_path_base %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-2])
 
-print(colnames(loaddata_output))
 loaddata.finish.time <- Sys.time()
 writeLines(c("Loaddata finished:", loaddata.finish.time), fileConn)
+
+# plane_format = "%02d"
+# # brightfield_projection_subsets <- list(
+# #   resolution1 = lapply(seq(0,8,by=1), sprintf, fmt=plane_format),
+# #   resolution2 = lapply(seq(0,8,by=2), sprintf, fmt=plane_format)
+# # )
+#
+# fluorescent_projection_subsets <- list(
+#   # resolution1 = lapply(seq(1,14,by=1), sprintf, fmt=plane_format)#,
+#   # resolution2 = lapply(seq(1,14,by=2), sprintf, fmt=plane_format)#,
+#   # resolution3 = lapply(seq(1,14,by=3), sprintf, fmt=plane_format),
+#   # resolution4 = lapply(seq(1,14,by=4), sprintf, fmt=plane_format),
+#   # middle3 = lapply(seq(5,7,by=1), sprintf, fmt=plane_format),
+#   # middle4 = lapply(seq(5,8,by=1), sprintf, fmt=plane_format),
+#   # middle5 = lapply(seq(4,8,by=1), sprintf, fmt=plane_format),
+#   # middle6 = lapply(seq(4,9,by=1), sprintf, fmt=plane_format)
+#   # mid123 = lapply(seq(1,3,by=1), sprintf, fmt=plane_format),
+#   # mid234 = lapply(seq(2,4,by=1), sprintf, fmt=plane_format),
+#   # mid345 = lapply(seq(3,5,by=1), sprintf, fmt=plane_format),
+#   # mid456 = lapply(seq(4,6,by=1), sprintf, fmt=plane_format),
+#   # mid246 = lapply(seq(2,6,by=2), sprintf, fmt=plane_format),
+#   mid24 = lapply(seq(2,4,by=2), sprintf, fmt=plane_format)
+# )
+
+brightfield_planes = as.list(loaddata_output %>% filter(channel=="ch2") %>% .$zst %>% unique())
+fluorescent_planes = as.list(loaddata_output %>% filter(channel=="ch3") %>% .$zst %>% unique())
+
+brightfield_projection_subsets <- list(
+  resolution1 = brightfield_planes,
+  resolution2 = brightfield_planes[seq(1,length(brightfield_planes),by=2)]
+)
+
+fluorescent_projection_subsets <- list(
+  mid24 = fluorescent_planes,
+  mid2 = fluorescent_planes[1],
+  mid4 = fluorescent_planes[2]
+)
 
 #==================================================#
 #         PHASE 1: flatfield correction            # # DONE #
@@ -184,28 +223,14 @@ json_projection_templates <- c(new_json_path_fluorescent_projection,
 
 # Plane subsets
 plane_format = "%02d"
-projection_subsets <- list(
-  # resolution1 = lapply(seq(1,14,by=1), sprintf, fmt=plane_format)#,
-  # resolution2 = lapply(seq(1,14,by=2), sprintf, fmt=plane_format)#,
-  # resolution3 = lapply(seq(1,14,by=3), sprintf, fmt=plane_format),
-  # resolution4 = lapply(seq(1,14,by=4), sprintf, fmt=plane_format),
-  # middle3 = lapply(seq(5,7,by=1), sprintf, fmt=plane_format),
-  # middle4 = lapply(seq(5,8,by=1), sprintf, fmt=plane_format),
-  # middle5 = lapply(seq(4,8,by=1), sprintf, fmt=plane_format),
-  # middle6 = lapply(seq(4,9,by=1), sprintf, fmt=plane_format)
-  # mid123 = lapply(seq(1,3,by=1), sprintf, fmt=plane_format),
-  # mid234 = lapply(seq(2,4,by=1), sprintf, fmt=plane_format),
-  # mid345 = lapply(seq(3,5,by=1), sprintf, fmt=plane_format),
-  # mid456 = lapply(seq(4,6,by=1), sprintf, fmt=plane_format),
-  mid246 = lapply(seq(2,6,by=2), sprintf, fmt=plane_format)
-)
+
 
 # ################ Creating fluorescence projection metadata (-> *.csv)
 
 tic()
 
-for (subset_name in names(projection_subsets)){
-  planes <- projection_subsets[[subset_name]]
+for (subset_name in names(fluorescent_projection_subsets)){
+  planes <- fluorescent_projection_subsets[[subset_name]]
 
   print(paste0("Creating fluorescence projection metadata with ", subset_name," planes"))
   for(i in 1:length(channel_projection_v)){
@@ -243,7 +268,7 @@ path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
                        group_tag = "projection",
-                       group_template_file="group_template_subsampling.txt")
+                       group_template_file="group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -286,22 +311,22 @@ json_projection_templates <- c(new_json_path_brightfield_projection)
 # # ################ Creating brightfield projection metadata (-> *.csv)
 
 # Plane subsets
-plane_format = "%02d"
-projection_subsets <- list(
-  resolution1 = lapply(seq(0,8,by=1), sprintf, fmt=plane_format), # 999999990000 only
-  resolution2 = lapply(seq(0,8,by=2), sprintf, fmt=plane_format)#, 999999990000 only
-  # resolution1 = lapply(seq(1,14,by=1), sprintf, fmt=plane_format)#,
-  # resolution2 = lapply(seq(1,10,by=2), sprintf, fmt=plane_format)#,
-  # resolution3 = lapply(seq(1,14,by=3), sprintf, fmt=plane_format),
-  # resolution4 = lapply(seq(1,14,by=4), sprintf, fmt=plane_format),
-  # middle3 = lapply(seq(5,7,by=1), sprintf, fmt=plane_format),
-  # middle4 = lapply(seq(5,8,by=1), sprintf, fmt=plane_format),
-  # middle5 = lapply(seq(4,8,by=1), sprintf, fmt=plane_format),
-  # middle6 = lapply(seq(4,9,by=1), sprintf, fmt=plane_format)
-)
+# plane_format = "%02d"
+# projection_subsets <- list(
+#   resolution1 = lapply(seq(0,8,by=1), sprintf, fmt=plane_format), # 999999990000 only
+#   resolution2 = lapply(seq(0,8,by=2), sprintf, fmt=plane_format)#, 999999990000 only
+#   # resolution1 = lapply(seq(1,14,by=1), sprintf, fmt=plane_format)#,
+#   # resolution2 = lapply(seq(1,10,by=2), sprintf, fmt=plane_format)#,
+#   # resolution3 = lapply(seq(1,14,by=3), sprintf, fmt=plane_format),
+#   # resolution4 = lapply(seq(1,14,by=4), sprintf, fmt=plane_format),
+#   # middle3 = lapply(seq(5,7,by=1), sprintf, fmt=plane_format),
+#   # middle4 = lapply(seq(5,8,by=1), sprintf, fmt=plane_format),
+#   # middle5 = lapply(seq(4,8,by=1), sprintf, fmt=plane_format),
+#   # middle6 = lapply(seq(4,9,by=1), sprintf, fmt=plane_format)
+# )
 
-for (subset_name in names(projection_subsets)){
-  planes <- projection_subsets[[subset_name]]
+for (subset_name in names(brightfield_projection_subsets)){
+  planes <- brightfield_projection_subsets[[subset_name]]
 
   print(paste0("Creating brightfield projection metadata with ", subset_name," planes"))
   for(i in 1:length(channel_projection_v)){
@@ -337,7 +362,7 @@ path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
                        group_tag = "brightfieldprojection",
-                       group_template_file="group_template_subsampling.txt")
+                       group_template_file="group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -348,8 +373,8 @@ toc()
 tic()
 print("Generating job files with grouping")
 
-for (name in names(projection_subsets)){
-  planes <- projection_subsets[[name]]
+for (name in names(brightfield_projection_subsets)){
+  planes <- brightfield_projection_subsets[[name]]
   for (i in 1:length(channel_projection_n)){
       link_json_metadata(metadata_split_path = list.files(new_path_base, pattern = "metadata_", full.names = TRUE) %>%
                            stringr::str_subset(pattern = ".csv") %>%
@@ -452,14 +477,14 @@ writeLines(c("Segmentation finished:", segmentation.finish.time), fileConn)
 #================================================================#
 
 # Plane subsets
-plane_format = "%02d"
-projection_subsets <- list(
-  mid123 = lapply(seq(1,3,by=1), sprintf, fmt=plane_format),
-  mid234 = lapply(seq(2,4,by=1), sprintf, fmt=plane_format),
-  mid345 = lapply(seq(3,5,by=1), sprintf, fmt=plane_format),
-  mid456 = lapply(seq(4,6,by=1), sprintf, fmt=plane_format),
-  mid246 = lapply(seq(2,6,by=2), sprintf, fmt=plane_format)
-)
+# plane_format = "%02d"
+# projection_subsets <- list(
+#   # mid123 = lapply(seq(1,3,by=1), sprintf, fmt=plane_format),
+#   # mid234 = lapply(seq(2,4,by=1), sprintf, fmt=plane_format),
+#   # mid345 = lapply(seq(3,5,by=1), sprintf, fmt=plane_format),
+#   # mid456 = lapply(seq(4,6,by=1), sprintf, fmt=plane_format),
+#   mid246 = lapply(seq(2,6,by=2), sprintf, fmt=plane_format)
+# )
 
 # Name of channels
 channel_v <- c("ch1")
@@ -473,8 +498,8 @@ json_featureextraction_templates <- c(new_json_path_featureextraction_ch3_ch4)
 
 tic()
 
-for (subset_name in names(projection_subsets)){
-  planes <- projection_subsets[[subset_name]]
+for (subset_name in names(fluorescent_projection_subsets)){
+  planes <- fluorescent_projection_subsets[[subset_name]]
 
   print(paste0("Creating flurescence feature extraction metadata with ", subset_name," planes"))
 
@@ -525,8 +550,7 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch3_ch4",
-                       group_template_file="group_template_subsampling.txt")
+                       group_tag = "featureextraction_ch3_ch4")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -568,8 +592,8 @@ json_featureextraction_templates <- c(new_json_path_featureextraction_ch5_ch6)
 
 tic()
 
-for (subset_name in names(projection_subsets)){
-  planes <- projection_subsets[[subset_name]]
+for (subset_name in names(fluorescent_projection_subsets)){
+  planes <- fluorescent_projection_subsets[[subset_name]]
 
   print(paste0("Creating flurescence feature extraction metadata with ", subset_name," planes"))
 
@@ -620,8 +644,7 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch5_ch6",
-                       group_template_file="group_template_subsampling.txt")
+                       group_tag = "featureextraction_ch5_ch6")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -655,12 +678,6 @@ toc()
 #   PHASE 4.2: brightfield feature extraction / measurements     #
 #================================================================#
 
-# Plane subsets
-plane_format = "%02d"
-projection_subsets <- list(
-  resolution2 = lapply(seq(1,10,by=2), sprintf, fmt=plane_format)
-)
-
 # Name of channels
 channel_measurement_v <- c("ch1")
 channel_measurement_n <- c("measurement_ch2")
@@ -669,8 +686,8 @@ json_featureextraction_templates <- c(new_json_path_featureextraction_ch2)
 
 ################ Creating feature extraction / measurements metadata (-> *.csv)
 
-for (subset_name in names(projection_subsets)){
-  planes <- projection_subsets[[subset_name]]
+for (subset_name in names(brightfield_projection_subsets)){
+  planes <- brightfield_projection_subsets[[subset_name]]
 
   print(paste0("Creating brightfield feature extraction metadata with ", subset_name," planes"))
   for(i in 1:length(channel_measurement_v)){
@@ -743,8 +760,7 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch2",
-                       group_template_file="group_template_subsampling.txt")
+                       group_tag = "featureextraction_ch2")
 print(path)
 print("Grouping data using python script")
 system(path)

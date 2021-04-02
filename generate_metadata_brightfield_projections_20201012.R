@@ -26,6 +26,7 @@ inbox_path_base= paste0("/home/ubuntu/bucket/inbox/", plate_name,"/Images/") #ab
 flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name,"/") #deprecated: only used for result collection
 
 path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_000012107103.yml"
+# path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_000012106803.yml"
 
 ################ Creating target dir
 
@@ -43,18 +44,27 @@ new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_proj
 new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json"
 new_json_path_featureextraction_ch2 = "~/dcp_helper/python/job_featureextraction_ch2_template.json"
 new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_template.json"
+new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_template.json"
 
 ################ This is where the execution starts
+
+fileConn <- file("metadata_generation.log")
+# writeLines( c("Hello","World"), fileConn )
+start.time <- Sys.time()
+# writeLines(c("Start time: ", start.time), fileConn)
 
 #==================================================#
 #       PHASE 0: initiate metadata dataframe       #
 #==================================================#
 
 loaddata_output <- extract_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml )
+loaddata.finish.time <- Sys.time()
+# writeLines(c("Loaddata finished:", loaddata.finish.time), fileConn)
 
 #==================================================#
 #         PHASE 1: flatfield correction            #
 #==================================================#
+
 
 # Name of channels
 channel_ffc_v <- c("ch2", "ch3", "ch4", "ch5", "ch6")
@@ -115,6 +125,9 @@ for(i in 1:length(channel_ffc_n)){
                   number_col_interval = c(1:24))
 }
 toc()
+
+ffc.finish.time <- Sys.time()
+# writeLines(c("FFC finished:", ffc.finish.time), fileConn)
 
 #==================================================#
 #        PHASE 2.1: fluorescent projections        #
@@ -248,7 +261,7 @@ path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
                        group_tag = "brightfieldprojection",
-                       group_template_file="group_template.txt")
+                       group_template_file="group_template_subsampling.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -281,6 +294,9 @@ for(i in 1:length(channel_projection_n)){
                   number_col_interval = c(1:24))
 }
 toc()
+
+projection.finish.time <- Sys.time()
+# writeLines(c("Projection finished:", projection.finish.time), fileConn)
 
 #==================================================#
 #             PHASE 3: segmentation                #
@@ -347,18 +363,22 @@ for(i in 1:length(channel_segmentation_n)){
 }
 toc()
 
+
+segmentation.finish.time <- Sys.time()
+# writeLines(c("Segmentation finished:", segmentation.finish.time), fileConn)
+
 #================================================================#
 #   PHASE 4.1: fluorescent feature extraction / measurements     #
 #================================================================#
 
 # Name of channels
 channel_v <- c("ch1")
-channel_measurement_n <- c("measurement_ch3_ch4_ch5_ch6")
+channel_measurement_n <- c("measurement_ch3_ch4")
 json_featureextraction_templates <- c(new_json_path_featureextraction_ch3_ch4)
 
 ################ Creating feature extraction / measurements metadata (-> *.csv)
 
-# NOTE: only ch3, ch4, ch5 and ch6 added
+# NOTE: only ch3, ch4
 
 tic()
 print("Creating feature extraction / measurements metadata")
@@ -390,6 +410,75 @@ for(i in 1:length(channel_v)){
              append(flatfield_dir) %>%
              append(Metadata_parent) %>%
              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch4"))) %>%
+             paste(collapse = "/")) %>%
+      select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
+  metadata_split_path <- write_metadata_split(file_ff, name = channel_measurement_n[i], path_base = new_path_base)
+}
+toc()
+
+################ Grouping feature extraction / measurements metadata (-> *create_group.sh, *batch.txt)
+################ Aggregating information and executable file
+
+tic()
+print("Creating shell script for grouping")
+path <- c()
+path <- generate_group(plate_name,
+                       c(channel_measurement_n),
+                       new_path_base,
+                       group_tag = "featureextraction_ch3_ch4")
+print(path)
+print("Grouping data using python script")
+system(path)
+toc()
+
+# ################# Job files
+
+tic()
+print("Generating job files with grouping")
+for (i in 1:length(channel_measurement_n)){
+  link_json_metadata(metadata_split_path = list.files(new_path_base, pattern = "metadata_", full.names = TRUE) %>%
+                       stringr::str_subset(pattern = ".csv") %>%
+                       stringr::str_subset(pattern = channel_measurement_n[i]),
+                     json_path = json_featureextraction_templates[i],
+                     path_base = new_path_base)
+}
+toc()
+
+# ################ Grouping final job files
+
+tic()
+for(i in 1:length(channel_measurement_n)){
+  group_jobs_bash(path_base = new_path_base,
+                  name = channel_measurement_n[i],
+                  letter_row_interval = c(1:16),
+                  number_col_interval = c(1:24))
+}
+toc()
+
+
+# Name of channels
+channel_v <- c("ch1")
+channel_measurement_n <- c("measurement_ch5_ch6")
+json_featureextraction_templates <- c(new_json_path_featureextraction_ch5_ch6)
+
+################ Creating feature extraction / measurements metadata (-> *.csv)
+
+# NOTE: only ch5 and ch6 added
+
+tic()
+print("Creating feature extraction / measurements metadata")
+for(i in 1:length(channel_v)){
+  file_ff <- loaddata_output %>%
+    dplyr::filter(channel == channel_v[i]) %>%
+    reformat_filelist() %>%
+    rowwise() %>%
+    mutate(Image_ObjectsFileName_Cells = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch1")), "_segmentation.tiff"),
+           Image_ObjectsPathName_Cells = Image_PathName_brightfield %>%
+             stringr::str_split(pattern = "/") %>%
+             unlist() %>% .[c(1:4)] %>%
+             append(flatfield_dir) %>%
+             append(Metadata_parent) %>%
+             append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch1"))) %>%
              paste(collapse = "/"),
            Image_FileName_ch5 = paste0(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch5")), "_maxprojection.tiff") ,
            Image_PathName_ch5 = Image_PathName_brightfield %>%
@@ -407,7 +496,7 @@ for(i in 1:length(channel_v)){
              append(Metadata_parent) %>%
              append(format_output_structure(c(Metadata_parent, Metadata_timepoint, Metadata_well, Metadata_fld, "ch6"))) %>%
              paste(collapse = "/")) %>%
-      select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
+    select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
   metadata_split_path <- write_metadata_split(file_ff, name = channel_measurement_n[i], path_base = new_path_base)
 }
 toc()
@@ -421,7 +510,7 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch3_ch4")
+                       group_tag = "measurement_ch5_ch6")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -567,5 +656,22 @@ for(i in 1:length(channel_measurement_n)){
 }
 toc()
 
+measurement.finish.time <- Sys.time()
+# writeLines(c("Measurement finished:", measurement.finish.time), fileConn)
+
 ################ Pushing metadata to S3 bucket
-system("./sync_metadata_to_bucket.sh")
+system("./sync_metadata_to_bucket.sh") # TODO: prepare sync metadata script for the new plates only
+
+
+upload.finish.time <- Sys.time()
+# writeLines(c("Upload finished:", upload.finish.time), fileConn)
+writeLines(c("Start time: ", start.time,
+             "Loaddata finished:", loaddata.finish.time,
+             "FFC finished:", ffc.finish.time,
+             "Projection finished:", projection.finish.time,
+             "Segmentation finished:", segmentation.finish.time,
+             "Measurement finished:", measurement.finish.time,
+             "Upload finished:", upload.finish.time),
+           fileConn)
+
+close(fileConn)
