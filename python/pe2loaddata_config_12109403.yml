@@ -1,0 +1,12 @@
+channels:
+    Brightfield: Brightfield
+    Digital Phase Contrast: PhaseContrast
+metadata:
+    Row: Row
+    Col: Col
+    FieldID: FieldID
+    PlaneID: PlaneID
+    ChannelID: ChannelID
+    ChannelName: ChannelName
+    TimepointID: TimepointID
+    AbsTime: AbsTime
