@@ -27,7 +27,7 @@ library(furrr)
 
 ```{r pressure, echo=FALSE}
 tic("Preparing data")
-measurement_id = "000012113303__2021-09-03T16_45_31-Measurement_1"
+measurement_id = "000012113303__2021-09-05T15_31_34-Measurement_3"
 
 results_dir = "/home/ubuntu/dcp_helper/data/results"
 
@@ -45,14 +45,14 @@ toc()
 ```
 Listing results
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 tic("Listing results")
 file_list <- list.files(file.path(results_dir, measurement_id), pattern = "*Cells.csv", recursive=TRUE, full.names = TRUE)
 # file_list <- Sys.glob(file.path(results_dir, measurement_id,"*","*Cells.csv"))
 length(file_list)
 toc()
 ```
-```{r}
+```{r eval=FALSE, include=FALSE}
 tic("Listing results")
 results_list <- dir(file.path(results_dir, measurement_id), full.names = TRUE)
 for (result in results_list) {
@@ -145,7 +145,7 @@ for (table_name in table_list) {
   print(table_name)
   table <- tbl(pool.v1, table_name)
   # glimpse(table)
-  print(colnames(table))
+  print(dim(table))
 }
 ```
 ```{r}
@@ -236,31 +236,58 @@ Creating observation table
 
 
 ```{r}
-tic("adding observations")
-new_measurement %>%
-    unite("observation", contains("observation"), sep = "___") %>%
-    mutate(data = furrr::future_map2(observation, 
-                                     full_path, 
-                                     ~ {read_and_merge_observations(.y) %>%
-                                       mutate(observation = .x) %>%
-                                       separate(observation, c("id_observation", "id_observation_checksum"), sep = "___", ) %>%
-                                       dbWriteTable(pool.v2, "observation", ., append = TRUE)
-                                    print(paste0("appended ", .y))
-                  }
-                                       ))
-toc()
+# tic("adding observations")
+# 
+# new_measurement[1:1000,] %>%
+#     unite("observation", contains("observation"), sep = "___") %>%
+#     mutate(data = furrr::future_map2(observation,
+#                                      full_path, 
+#                                      ~ {read_and_merge_observations(.y) %>%
+#                                        mutate(observation = .x) %>%
+#                                        separate(observation, c("id_observation", "id_observation_checksum"), sep = "___", ) %>%
+#                                        dbWriteTable(pool.v2, "observation", ., append = TRUE)
+#                                     print(paste0("appended ", .y))
+#                                     flush.console() }
+#     ))
+# toc()
 ```
 
+```{r message=FALSE, warning=FALSE}
+
+tic("adding observations")
+
+new_measurement_2 <- new_measurement %>% 
+  unite("observation", contains("observation"), sep = "___") 
+
+furrr::future_map2(new_measurement_2$observation, 
+                   new_measurement_2$full_path,
+                     ~ { read_and_merge_observations(.y) %>%
+                           mutate(observation = .x) %>%
+                           separate(observation, c("id_observation", "id_observation_checksum"), sep = "___", ) %>%
+                           dbWriteTable(pool.v2, "observation", ., append = TRUE)
+                         # print(paste0("appended ", .y))
+                         # flush.console() 
+                       }
+    )
+toc()
+
+#1-500: 457.342sec
+#501-1000: 454.088 sec elapsed
+#all: 8000 sec
+```
+
+
+
 ```{r}
-# for (row_num in 1:nrow(new_measurement)){
+# for (row_num in 1:nrow(new_measurement)) {
 # for (row_num in c(1,2)) {
 #   row <- new_measurement[row_num,]
 #   glimpse(row)
-#   observation <- read_and_merge_observations(row[1,"full_path"] %>% as.character())
+#   observation <- read_and_merge_observations( row[1,"full_path"] %>% as.character() )
 #   observation$id_observation <- row[1,"id_observation"] %>% as.character()
-#   observation$id_observation_checksum <- compute_observations_checksum(row[1,"full_path"] %>% as.character())
+#   observation$id_observation_checksum <- compute_observations_checksum( row[1,"full_path"] %>% as.character() )
 #   glimpse(observation)
-}
+# }
 ```
 
 
