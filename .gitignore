@@ -5,6 +5,7 @@
 inst/doc
 data/password.txt
 glacier-restore.txt
+*.log
 metadata
 data
 figures

@@ -12,8 +12,8 @@ format_output_structure <- function(metadata_tags){
   paste0(metadata_tags, collapse = "-")
 }
 
-# plate_name = args = commandArgs(trailingOnly=TRUE)
-plate_name = "000012109703__2021-03-26T07_02_12-Measurement_3"
+plate_name = args = commandArgs(trailingOnly=TRUE)
+# plate_name = "000012109703__2021-03-26T07_02_12-Measurement_3"
 # for debugging only
 #plate_name = "000012095203__2019-12-09T17_58_26-Measurement_1"
 print(paste0("Processing plate ", plate_name))
@@ -61,9 +61,9 @@ new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextrac
 
 ################ This is where the execution starts
 
-fileConn <- file(paste0(new_path_base,"metadata_generation.log"))
+fileConn <- file(paste0(new_path_base, "metadata_generation_", plate_name,".log"))
 start.time <- Sys.time()
-writeLines(c("Start time: ", start.time), fileConn)
+# writeLines(c("Start time: ", start.time), fileConn)
 
 #==================================================#
 #       PHASE 0: initiate metadata dataframe       #
@@ -96,7 +96,7 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    mutate(parent = inbox_path_base %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-2])
 
 loaddata.finish.time <- Sys.time()
-writeLines(c("Loaddata finished:", loaddata.finish.time), fileConn)
+# writeLines(c("Loaddata finished:", loaddata.finish.time), fileConn)
 
 # plane_format = "%02d"
 # # brightfield_projection_subsets <- list(
@@ -125,14 +125,14 @@ brightfield_planes = as.list(loaddata_output %>% filter(channel=="ch2") %>% .$zs
 fluorescent_planes = as.list(loaddata_output %>% filter(channel=="ch3") %>% .$zst %>% unique())
 
 brightfield_projection_subsets <- list(
-  resolution1 = brightfield_planes,
-  resolution2 = brightfield_planes[seq(1,length(brightfield_planes),by=2)]
+  resolution1 = brightfield_planes#,
+  # resolution2 = brightfield_planes[seq(1,length(brightfield_planes),by=2)]
 )
 
 fluorescent_projection_subsets <- list(
-  mid24 = fluorescent_planes,
-  mid2 = fluorescent_planes[1],
-  mid4 = fluorescent_planes[2]
+  mid24 = fluorescent_planes#,
+  # mid2 = fluorescent_planes[1],
+  # mid4 = fluorescent_planes[2]
 )
 
 #==================================================#
@@ -201,13 +201,14 @@ for(i in 1:length(channel_ffc_n)){
   group_jobs_bash(path_base = new_path_base,
                   name = channel_ffc_n[i],
                   letter_row_interval = c(1:16),
-                  number_col_interval = c(1:24))
+                  number_col_interval = c(1:24),
+                  python_call = "python ~/DCP2.0/run.py submitJob ")
 }
 toc()
 # end ffc section
 
 ffc.finish.time <- Sys.time()
-writeLines(c("FFC finished:", ffc.finish.time), fileConn)
+# writeLines(c("FFC finished:", ffc.finish.time), fileConn)
 
 #==================================================#
 #        PHASE 2.1: fluorescent projections        #
@@ -295,7 +296,8 @@ for(i in 1:length(channel_projection_n)){
   group_jobs_bash(path_base = new_path_base,
                   name = channel_projection_n[i],
                   letter_row_interval = c(1:16),
-                  number_col_interval = c(1:24))
+                  number_col_interval = c(1:24),
+                  python_call = "python ~/DCP2.0/run.py submitJob ")
 }
 toc()
 
@@ -392,12 +394,13 @@ for(i in 1:length(channel_projection_n)){
   group_jobs_bash(path_base = new_path_base,
                   name = channel_projection_n[i],
                   letter_row_interval = c(1:16),
-                  number_col_interval = c(1:24))
+                  number_col_interval = c(1:24),
+                  python_call = "python ~/DCP2.0/run.py submitJob ")
 }
 toc()
 
 projection.finish.time <- Sys.time()
-writeLines(c("Projection finished:", projection.finish.time), fileConn)
+# writeLines(c("Projection finished:", projection.finish.time), fileConn)
 
 #==================================================#
 #             PHASE 3: segmentation                #
@@ -462,14 +465,15 @@ for(i in 1:length(channel_segmentation_n)){
   group_jobs_bash(path_base = new_path_base,
                   name = channel_segmentation_n[i],
                   letter_row_interval = c(1:16),
-                  number_col_interval = c(1:24))
+                  number_col_interval = c(1:24),
+                  python_call = "python ~/DCP2.0/run.py submitJob ")
 }
 toc()
 
 #} # end segmentation section
 
 segmentation.finish.time <- Sys.time()
-writeLines(c("Segmentation finished:", segmentation.finish.time), fileConn)
+# writeLines(c("Segmentation finished:", segmentation.finish.time), fileConn)
 
 
 #================================================================#
@@ -576,7 +580,8 @@ for(i in 1:length(channel_measurement_n)){
   group_jobs_bash(path_base = new_path_base,
                   name = channel_measurement_n[i],
                   letter_row_interval = c(1:16),
-                  number_col_interval = c(1:24))
+                  number_col_interval = c(1:24),
+                  python_call = "python ~/DCP2.0/run.py submitJob ")
 }
 toc()
 
@@ -670,7 +675,8 @@ for(i in 1:length(channel_measurement_n)){
   group_jobs_bash(path_base = new_path_base,
                   name = channel_measurement_n[i],
                   letter_row_interval = c(1:16),
-                  number_col_interval = c(1:24))
+                  number_col_interval = c(1:24),
+                  python_call = "python ~/DCP2.0/run.py submitJob ")
 }
 toc()
 
@@ -786,12 +792,13 @@ for(i in 1:length(channel_measurement_n)){
   group_jobs_bash(path_base = new_path_base,
                   name = channel_measurement_n[i],
                   letter_row_interval = c(1:16),
-                  number_col_interval = c(1:24))
+                  number_col_interval = c(1:24),
+                  python_call = "python ~/DCP2.0/run.py submitJob ")
 }
 toc()
 
 measurement.finish.time <- Sys.time()
-writeLines(c("Measurement finished:", measurement.finish.time), fileConn)
+# writeLines(c("Measurement finished:", measurement.finish.time), fileConn)
 
 ################ Pushing metadata to S3 bucket
 system("./sync_metadata_to_bucket.sh") # TODO: prepare sync metadata script for the new plates only
