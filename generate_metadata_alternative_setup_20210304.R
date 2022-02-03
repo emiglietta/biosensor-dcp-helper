@@ -57,7 +57,7 @@ new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextrac
 new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_template.json"
 new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_downsampled_template.json"
 
-
+python_call_submitjob = "python ~/DCP2.0/run.py submitJob "
 
 ################ This is where the execution starts
 
@@ -202,7 +202,7 @@ for(i in 1:length(channel_ffc_n)){
                   name = channel_ffc_n[i],
                   letter_row_interval = c(1:16),
                   number_col_interval = c(1:24),
-                  python_call = "python ~/DCP2.0/run.py submitJob ")
+                  python_call = python_call_submitjob)
 }
 toc()
 # end ffc section
@@ -297,7 +297,7 @@ for(i in 1:length(channel_projection_n)){
                   name = channel_projection_n[i],
                   letter_row_interval = c(1:16),
                   number_col_interval = c(1:24),
-                  python_call = "python ~/DCP2.0/run.py submitJob ")
+                  python_call = python_call_submitjob)
 }
 toc()
 
@@ -395,7 +395,7 @@ for(i in 1:length(channel_projection_n)){
                   name = channel_projection_n[i],
                   letter_row_interval = c(1:16),
                   number_col_interval = c(1:24),
-                  python_call = "python ~/DCP2.0/run.py submitJob ")
+                  python_call = python_call_submitjob)
 }
 toc()
 
@@ -466,7 +466,7 @@ for(i in 1:length(channel_segmentation_n)){
                   name = channel_segmentation_n[i],
                   letter_row_interval = c(1:16),
                   number_col_interval = c(1:24),
-                  python_call = "python ~/DCP2.0/run.py submitJob ")
+                  python_call = python_call_submitjob)
 }
 toc()
 
@@ -581,7 +581,7 @@ for(i in 1:length(channel_measurement_n)){
                   name = channel_measurement_n[i],
                   letter_row_interval = c(1:16),
                   number_col_interval = c(1:24),
-                  python_call = "python ~/DCP2.0/run.py submitJob ")
+                  python_call = python_call_submitjob)
 }
 toc()
 
@@ -676,7 +676,7 @@ for(i in 1:length(channel_measurement_n)){
                   name = channel_measurement_n[i],
                   letter_row_interval = c(1:16),
                   number_col_interval = c(1:24),
-                  python_call = "python ~/DCP2.0/run.py submitJob ")
+                  python_call = python_call_submitjob)
 }
 toc()
 
@@ -793,7 +793,7 @@ for(i in 1:length(channel_measurement_n)){
                   name = channel_measurement_n[i],
                   letter_row_interval = c(1:16),
                   number_col_interval = c(1:24),
-                  python_call = "python ~/DCP2.0/run.py submitJob ")
+                  python_call = python_call_submitjob)
 }
 toc()
 
