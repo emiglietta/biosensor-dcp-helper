@@ -20,9 +20,10 @@ print(paste0("Processing plate ", plate_name))
 
 ################ Define paths
 
-flatfield_dir = "flatfield"
+flatfield_dir = "flatfieldv2"
+metadata_dir = "dcp_helper/metadatav2/"
 
-new_path_base = paste0("~/dcp_helper/metadata/", plate_name,"/") #relative path acceptable
+new_path_base = paste0("~/", metadata_dir, plate_name,"/") #relative path acceptable
 inbox_path_base= paste0("/home/ubuntu/bucket/inbox/", plate_name,"/Images/") #absolute path with /home/ubuntu/ required
 #flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name,"_subsampling/") #deprecated: only used for result collection
 flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name)
@@ -58,6 +59,7 @@ new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextrac
 new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_downsampled_template.json"
 
 python_call_submitjob = "python ~/DCP2.0/run.py submitJob "
+# python_call_submitjob = "python ~/Distributed-CellProfiler/run.py submitJob "
 
 ################ This is where the execution starts
 
@@ -168,7 +170,7 @@ toc()
 ################ Aggregating information and executable file
 
 tic()
-print("Creating shell script for grouping")
+print("Creating shell script for grouping fluorescent ffc")
 path <- c()
 path <- generate_group(plate_name,
                        c(channel_ffc_n),
@@ -190,7 +192,9 @@ for (i in 1:length(channel_ffc_v)){
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_ffc_n[i]),
                      json_path = json_ffc_templates[i],
-                     path_base = new_path_base)
+                     path_base = new_path_base,
+                     flatfield_dir = flatfield_dir,
+                     path_to_metadata = metadata_dir)
 }
 toc()
 
@@ -235,7 +239,7 @@ for (subset_name in names(fluorescent_projection_subsets)){
 
   print(paste0("Creating fluorescence projection metadata with ", subset_name," planes"))
   for(i in 1:length(channel_projection_v)){
-    print(colnames(loaddata_output))
+    # print(colnames(loaddata_output))
     file_ff <- loaddata_output %>%
       dplyr::filter(channel == channel_projection_v[i]) %>%
       dplyr::filter(zst %in% planes) %>%
@@ -251,7 +255,7 @@ for (subset_name in names(fluorescent_projection_subsets)){
                 paste(collapse = "/") ) %>%
       mutate(Metadata_planesampling = subset_name) %>%
       select(-Image_PathName_brightfield, -Image_FileName_brightfield) %>% ungroup()
-    print(colnames(file_ff))
+    # print(colnames(file_ff))
     metadata_split_path <- write_metadata_split(file_ff,
                                                 name = paste0(channel_projection_n[i], "_", subset_name),
                                                 path_base = new_path_base)
@@ -285,7 +289,9 @@ for (i in 1:length(channel_projection_v)){
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_projection_n[i]),
                      json_path = json_projection_templates[i],
-                     path_base = new_path_base)
+                     path_base = new_path_base,
+                     flatfield_dir = flatfield_dir,
+                     path_to_metadata = metadata_dir)
 }
 toc()
 
@@ -382,7 +388,9 @@ for (name in names(brightfield_projection_subsets)){
                            stringr::str_subset(pattern = ".csv") %>%
                            stringr::str_subset(pattern = channel_projection_n[i]),
                          json_path = json_projection_templates[i],
-                         path_base = new_path_base)
+                         path_base = new_path_base,
+                         flatfield_dir = flatfield_dir,
+                         path_to_metadata = metadata_dir)
   }
 }
 toc()
@@ -454,7 +462,9 @@ for (i in 1:length(channel_segmentation_n)){
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_segmentation_n[i]),
                      json_path = json_segmentation_templates[i],
-                     path_base = new_path_base)
+                     path_base = new_path_base,
+                     flatfield_dir = flatfield_dir,
+                     path_to_metadata = metadata_dir)
 }
 toc()
 
@@ -569,7 +579,9 @@ for (i in 1:length(channel_measurement_n)){
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_measurement_n[i]),
                      json_path = json_featureextraction_templates[i],
-                     path_base = new_path_base)
+                     path_base = new_path_base,
+                     flatfield_dir = flatfield_dir,
+                     path_to_metadata = metadata_dir)
 }
 toc()
 
@@ -664,7 +676,9 @@ for (i in 1:length(channel_measurement_n)){
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_measurement_n[i]),
                      json_path = json_featureextraction_templates[i],
-                     path_base = new_path_base)
+                     path_base = new_path_base,
+                     flatfield_dir = flatfield_dir,
+                     path_to_metadata = metadata_dir)
 }
 toc()
 
@@ -781,7 +795,9 @@ for (i in 1:length(channel_measurement_n)){
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_measurement_n[i]),
                      json_path = json_featureextraction_templates[i],
-                     path_base = new_path_base)
+                     path_base = new_path_base,
+                     flatfield_dir = flatfield_dir,
+                     path_to_metadata = metadata_dir)
 }
 toc()
 

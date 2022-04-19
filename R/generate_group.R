@@ -16,6 +16,7 @@ generate_group <- function(plate_name, channel_n, path_base, group_tag="all", gr
     as_tibble() %>%
     magrittr::set_colnames(c("plate_name", "channel_n"))
 
+
   path = paste0(path_base, plate_name, "_", group_tag,  "_create_group.sh")
   fileConn<-file(path, "w")
 
@@ -28,7 +29,7 @@ generate_group <- function(plate_name, channel_n, path_base, group_tag="all", gr
       read_lines(group_template_file),
       df$channel_n)
   ) %>%
-    write_lines(fileConn)
+    writeLines(fileConn)
 
   close(fileConn)
 
