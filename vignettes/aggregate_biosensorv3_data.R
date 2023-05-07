@@ -1,3 +1,6 @@
+
+
+
 ## ----setup, include=FALSE---------------------------------------------------------------------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -12,9 +15,11 @@ library(digest)
 library(furrr)
 
 
+
 ## ----pressure, echo=FALSE, message=FALSE, warning=FALSE---------------------------------------------------------------------------------------
 tic("Preparing data")
-measurement_id = "000012112403__2021-06-10T14_42_00-Measurement_2"
+# measurement_id = "000012117203__2023-03-17T15_05_10-Measurement_5"
+measurement_id = args = commandArgs(trailingOnly=TRUE)
 
 bucket_dir = "s3://ascstore/flatfieldv2/"             # AWS S3 folder containing single-cell morphological measurements (or observations)
 results_dir = "/home/ubuntu/dcp_helper/data/results/" # temporary local folder to pull single cell data
@@ -52,6 +57,9 @@ toc()
 
 compute_observations_checksum <- function(result_path, pattern = "*Cells.csv") {
   observation.list <- list.files(result_path, pattern = pattern, recursive = TRUE, full.names = TRUE)
+
+  # reading measurements only for all z-stack samplings (resolution1, mid24)
+  observation.list <- c(observation.list[grepl("resolution1", observation.list)], observation.list[grepl("mid24", observation.list)])
   # print(result_path)
   # print(observation.list)
 
@@ -61,6 +69,8 @@ compute_observations_checksum <- function(result_path, pattern = "*Cells.csv") {
 read_and_merge_observations <- function(result_path, pattern = "*Cells.csv"){
 
   observation.list <- list.files(result_path, pattern = pattern, recursive = TRUE, full.names = TRUE)
+
+  observation.list <- c(observation.list[grepl("resolution1", observation.list)], observation.list[grepl("mid24", observation.list)])
   # print(result_path)
   # print(observation.list)
 
@@ -123,7 +133,7 @@ pool.v3 <- pool::dbPool(RPostgres::Postgres(),
 # files <- list.files(file.path(results_dir, measurement_id), pattern = "ch1", full.names = TRUE) %>% paste0(., "/resolution1/", "measurement_ch2_Cells.csv")
 results_list <- dir(file.path(results_dir, measurement_id), pattern = "ch1", full.names = TRUE)
 
-tic("New measurement")
+tic("Creating records for new measurements")
 measurement <- tbl(pool.v3, "measurement")
 existing_measurement <- measurement %>% dplyr::select(id_observation,id_observation_checksum) %>% distinct() %>% collect()
 
@@ -140,7 +150,7 @@ new_measurement = tibble(id_barcode = measurement_id %>% str_extract(pattern = "
     anti_join(existing_measurement)
 toc()
 
-tic("Adding to database")
+tic("Adding new measurements to database")
 new_measurement %>%
     dbWriteTable(pool.v3, "measurement", ., append = TRUE)
 toc()
@@ -174,7 +184,7 @@ toc()
 
 ## ----message=FALSE, warning=FALSE-------------------------------------------------------------------------------------------------------------
 
-tic("adding observations")
+tic("Adding new observations to database")
 
 new_measurement_2 <- new_measurement %>%
   unite("observation", contains("observation"), sep = "___")

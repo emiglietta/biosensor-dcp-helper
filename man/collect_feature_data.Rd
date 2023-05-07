@@ -4,11 +4,18 @@
 \alias{collect_feature_data}
 \title{Collect Feature data after image analysis with cellprofiler}
 \usage{
-collect_feature_data(path_data, channel_of_interest = "ch1",
-  measurment_of_interest = "measurment_IdentifySecondaryObjects.csv")
+collect_feature_data(
+  path_data,
+  channel_of_interest = "ch1",
+  result_path = "~/dcp_helper/data/results/",
+  measurment_of_interest = "measurment_IdentifySecondaryObjects.csv"
+)
 }
 \arguments{
 \item{measurment_of_interest}{}
+}
+\value{
+
 }
 \description{
 Collect Feature data after image analysis with cellprofiler

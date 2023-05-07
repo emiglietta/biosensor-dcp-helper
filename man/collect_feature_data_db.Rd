@@ -4,13 +4,21 @@
 \alias{collect_feature_data_db}
 \title{Collect Feature data after image analysis with cellprofiler}
 \usage{
-collect_feature_data_db(path_data,
-  database = "/home/ubuntu/bucket/data/cellevent_tmrm_cellprofiler.db",
+collect_feature_data_db(
+  path_data,
+  host_db = "biosensor.c9k2hfiwt5mi.us-east-2.rds.amazonaws.com",
+  result_path = "~/dcp_helper/data/results/",
   channel_of_interest = "ch1",
-  measurment_of_interest = "measurment_IdentifySecondaryObjects.csv")
+  measurement_of_interest = "measurement_IdentifySecondaryObjects.csv"
+)
 }
 \arguments{
-\item{measurment_of_interest}{}
+\item{result_path}{Path to collected measurements}
+
+\item{measurement_of_interest}{}
+}
+\value{
+
 }
 \description{
 Collect Feature data after image analysis with cellprofiler

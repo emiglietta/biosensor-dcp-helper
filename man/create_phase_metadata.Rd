@@ -4,12 +4,20 @@
 \alias{create_phase_metadata}
 \title{Title}
 \usage{
-create_phase_metadata(path = getwd(), ch_number = "ch1",
-  interactive = TRUE, interactive_path = "~/metadata", name = "pc",
-  bucket_mode = TRUE)
+create_phase_metadata(
+  path = getwd(),
+  ch_number = "ch1",
+  interactive = TRUE,
+  interactive_path = "~/metadata",
+  name = "pc",
+  bucket_mode = TRUE
+)
 }
 \arguments{
 \item{name}{}
+}
+\value{
+
 }
 \description{
 Title

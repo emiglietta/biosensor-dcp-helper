@@ -4,12 +4,21 @@
 \alias{add_brightfield_proj}
 \title{Add details for a brightfield projection to the metadata object}
 \usage{
-add_brightfield_proj(file_f, p = "p16", flatfield_dir = "flatfield",
-  brightfield_channel = "ch2", fk = "fk1fl1",
-  projection_tag = "_projection", image_tag = ".tiff")
+add_brightfield_proj(
+  file_f,
+  p = "p16",
+  flatfield_dir = "flatfield",
+  brightfield_channel = "ch2",
+  fk = "fk1fl1",
+  projection_tag = "varproject.tiff",
+  image_tag = ".tiff"
+)
 }
 \arguments{
 \item{name}{}
+}
+\value{
+
 }
 \description{
 Add details for a brightfield projection to the metadata object

@@ -2,13 +2,16 @@
 % Please edit documentation in R/dump_database.R
 \name{dump_database}
 \alias{dump_database}
-\title{Dump a dataframe into a database}
+\title{DEPRECATED Dump a dataframe into a database}
 \usage{
-dump_database(x, name_of_table = "cells", pool = pool)
+dump_database(x, name_of_table = "cells", con)
 }
 \arguments{
 \item{measurment_of_interest}{}
 }
+\value{
+
+}
 \description{
-Dump a dataframe into a database
+DEPRECATED Dump a dataframe into a database
 }

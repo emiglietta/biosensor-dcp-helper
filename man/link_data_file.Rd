@@ -4,10 +4,24 @@
 \alias{link_data_file}
 \title{Fill a JSON template with a specific metadata path and metadata groupings}
 \usage{
-link_data_file(metadata_split_path, json_template, json_path, path_base)
+link_data_file(
+  metadata_split_path,
+  json_template,
+  json_path,
+  path_base,
+  flatfield_dir = "flatfield",
+  path_to_metadata = "dcp_helper/metadata/"
+)
 }
 \arguments{
-\item{name}{}
+\item{path_base}{Destination directory of job files}
+
+\item{flatfield_dir}{Directory for intemediate and final results}
+
+\item{path_to_metadata}{Directory containing metadata files}
+}
+\value{
+
 }
 \description{
 Fill a JSON template with a specific metadata path and metadata groupings

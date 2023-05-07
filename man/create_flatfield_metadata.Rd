@@ -4,9 +4,15 @@
 \alias{create_flatfield_metadata}
 \title{Title}
 \usage{
-create_flatfield_metadata(path = paste0(getwd(), "/"), ch_number,
-  force = FALSE, name = "bf", range = c(1, 16), interactive = TRUE,
-  interactive_path = "~/bucket/metadata")
+create_flatfield_metadata(
+  path = paste0(getwd(), "/"),
+  ch_number,
+  force = FALSE,
+  name = "bf",
+  range = c(1, 16),
+  interactive = TRUE,
+  interactive_path = "~/bucket/metadata"
+)
 }
 \arguments{
 \item{name}{}

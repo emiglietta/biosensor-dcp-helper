@@ -4,11 +4,19 @@
 \alias{write_metadata}
 \title{Title}
 \usage{
-write_metadata(df, path, interactive, interactive_path = "~/metadata",
-  name = "pc")
+write_metadata(
+  df,
+  path,
+  interactive,
+  interactive_path = "~/metadata",
+  name = "pc"
+)
 }
 \arguments{
 \item{name}{}
+}
+\value{
+
 }
 \description{
 Title

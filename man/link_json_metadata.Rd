@@ -4,10 +4,19 @@
 \alias{link_json_metadata}
 \title{Linking JSON job file to metadata object}
 \usage{
-link_json_metadata(json_path, metadata_split_path, path_base)
+link_json_metadata(
+  json_path,
+  metadata_split_path,
+  path_base,
+  flatfield_dir = "flatfield",
+  path_to_metadata = "dcp_helper/metadata/"
+)
 }
 \arguments{
 \item{name}{}
+}
+\value{
+
 }
 \description{
 Linking JSON job file to metadata object

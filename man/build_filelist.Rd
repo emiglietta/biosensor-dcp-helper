@@ -2,13 +2,23 @@
 % Please edit documentation in R/build_filelist.R
 \name{build_filelist}
 \alias{build_filelist}
-\title{Title}
+\title{List all elements in a directory and store a list of them in the metadata directory. If a filelist has already been created, it will not list all files again}
 \usage{
-build_filelist(path, force, path_base)
+build_filelist(
+  path,
+  force,
+  path_base,
+  path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config.yml"
+)
 }
 \arguments{
-\item{path}{}
+\item{path}{Directory of raw files and Index.idx.xml file}
+
+\item{path_base}{Destination directory of metadata}
+}
+\value{
+A dataframe
 }
 \description{
-Title
+List all elements in a directory and store a list of them in the metadata directory. If a filelist has already been created, it will not list all files again
 }

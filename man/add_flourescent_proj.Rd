@@ -4,11 +4,18 @@
 \alias{add_flourescent_proj}
 \title{Add details for a feature extraction of multi-channel_n images to metadata}
 \usage{
-add_flourescent_proj(file_f, flatfield_dir = "flatfield",
-  channel_n = c("ch3", "ch4"), projection_tag = "maxproject.tiff")
+add_flourescent_proj(
+  file_f,
+  flatfield_dir = "flatfield",
+  channel_n = c("ch3", "ch4"),
+  projection_tag = "maxproject.tiff"
+)
 }
 \arguments{
 \item{name}{}
+}
+\value{
+
 }
 \description{
 Add details for a feature extraction of multi-channel_n images to metadata

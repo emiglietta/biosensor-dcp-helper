@@ -2,7 +2,7 @@
 ## Define directory names - you will have to change this manually!
 ## Make sure the directories contain no spaces!
 ## The pipeline assumes there is a directory in the "inbox" directory that has the following name:
-## Call this script with: Rscript generate_metadata_"your-platename(s)-here".R
+## Call this script with: Rscript generate_metadata_alternative_setup_20220929.R <measurement_id>
 
 library(tidyverse)
 library(dcphelper)
@@ -13,9 +13,10 @@ format_output_structure <- function(metadata_tags){
 }
 
 plate_name = args = commandArgs(trailingOnly=TRUE)
-# plate_name = "000012109703__2021-03-26T07_02_12-Measurement_3"
+
 # for debugging only
 #plate_name = "000012095203__2019-12-09T17_58_26-Measurement_1"
+
 print(paste0("Processing plate ", plate_name))
 
 ################ Define paths
@@ -29,7 +30,9 @@ inbox_path_base= paste0("/home/ubuntu/bucket/inbox_test_mit/", plate_name,"/Imag
 flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name)
 
 #path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_999999990000.yml"
-path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_000012116403_20220926.yml"
+path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_000012116403_20220926.yml" # should match with Index.idx.xml metadata
+
+# tail -1000 Index.idx.xml | grep ChannelName | sort -u
 
 ################ Creating target dir
 
@@ -817,8 +820,8 @@ measurement.finish.time <- Sys.time()
 # writeLines(c("Measurement finished:", measurement.finish.time), fileConn)
 
 ################ Pushing metadata to S3 bucket
-system("./sync_metadata_to_bucket.sh") # TODO: prepare sync metadata script for the new plates only
-
+# system("./sync_metadata_to_bucket.sh") # TODO: prepare sync metadata script for the new plates only
+system(paste0("aws s3 sync ~/", metadata_dir, " s3://ascstore/", metadata_dir, " --exclude \".git*\""))
 
 upload.finish.time <- Sys.time()
 # writeLines(c("Upload finished:", upload.finish.time), fileConn)

@@ -4,10 +4,13 @@
 \alias{write_metadata_split}
 \title{Title}
 \usage{
-write_metadata_split(df, name = "pc", path_base)
+write_metadata_split(df, name = "segmentation", path_base)
 }
 \arguments{
-\item{name}{}
+\item{path_base}{}
+}
+\value{
+
 }
 \description{
 Title

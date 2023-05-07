@@ -4,10 +4,19 @@
 \alias{generate_group}
 \title{Generate grouping function call}
 \usage{
-generate_group(plate_name, channel_n)
+generate_group(
+  plate_name,
+  channel_n,
+  path_base,
+  group_tag = "all",
+  group_template_file = "group_template.txt"
+)
 }
 \arguments{
-\item{channel_n}{}
+\item{group_tag}{}
+}
+\value{
+
 }
 \description{
 Generate grouping function call

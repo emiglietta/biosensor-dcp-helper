@@ -4,8 +4,13 @@
 \alias{group_jobs_bash}
 \title{Creating a shell script that submits a whole collection of Jobs for job files that match a given pattern and well range}
 \usage{
-group_jobs_bash(path_base, name, letter_row_interval, number_col_interval,
-  python_call = "python ~/Distributed-CellProfiler/run.py submitJob ")
+group_jobs_bash(
+  path_base,
+  name,
+  letter_row_interval,
+  number_col_interval,
+  python_call = "python ~/Distributed-CellProfiler/run.py submitJob "
+)
 }
 \arguments{
 \item{path_base}{the path to the directory containing the job files}
@@ -17,6 +22,9 @@ group_jobs_bash(path_base, name, letter_row_interval, number_col_interval,
 \item{python_call}{a python call that will be created}
 
 \item{pattern}{a string that has to be contained in the job files of interest}
+}
+\value{
+
 }
 \description{
 Creating a shell script that submits a whole collection of Jobs for job files that match a given pattern and well range
