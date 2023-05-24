@@ -1,0 +1,1010 @@
+---
+title: "overview_for_merging_biosensorv3downsampling_data"
+author: "mcsaba"
+date: "11/2/2021"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Libraries
+
+```{r cars}
+library(tidyverse)
+library(pool)
+library(tictoc)
+library(DBI)
+library(RPostgres)
+library(digest)
+library(furrr)
+```
+
+# Data
+
+## Set variables
+
+```{r pressure, echo=FALSE}
+tic("Preparing data")
+measurement_id = "000012117103__2023-03-10T13_13_16-Measurement_1"
+aws_output_dir = "s3://ascstore/flatfieldv2/"
+results_dir = "/home/ubuntu/dcp_helper/data/results/"
+
+if ( dir.exists( file.path(results_dir,measurement_id) ) ) {
+  print("start processing")
+} else {
+  print("needs to download")
+  dir.create(file.path(results_dir,measurement_id))
+  system( paste('aws s3 sync',
+                paste0(aws_output_dir,measurement_id), 
+                paste0(results_dir,measurement_id),
+                '--exclude "*" --include "*.csv" --force-glacier-transfer') )
+}
+toc()
+```
+Listing results
+
+```{r eval=FALSE, include=FALSE}
+tic("Listing results")
+file_list <- list.files(file.path(results_dir, measurement_id), pattern = "*Cells.csv", recursive=TRUE, full.names = TRUE)
+# file_list <- Sys.glob(file.path(results_dir, measurement_id,"*","*Cells.csv"))
+length(file_list)
+toc()
+```
+
+```{r eval=FALSE, include=FALSE}
+tic("Listing results")
+results_list <- dir(file.path(results_dir, measurement_id), full.names = TRUE)
+# for (result in results_list) {
+#   
+# }
+toc()
+```
+
+# Functions
+
+```{r message=FALSE, warning=FALSE}
+
+# TODOS:
+# - checksum per csv file (per channel per downsampling type)
+# - store downsampling type in a separate column
+# - table for each channel vs store channel in a column? (projection type)
+
+compute_observations_checksum <- function(result_path, pattern = "*Cells.csv") {
+  observation.list <- list.files(result_path, pattern = pattern, recursive = TRUE, full.names = TRUE)
+  # print(result_path)
+  # print(observation.list)
+  
+  return(paste(tools::md5sum(observation.list), collapse = '|'))
+}
+
+read_and_merge_observations <- function(result_path, pattern = "*Cells.csv"){
+  
+  observation.list <- list.files(result_path, pattern = pattern, recursive = TRUE, full.names = TRUE)
+  # print(result_path)
+  # print(observation.list)
+  
+  tbl_list <- c()
+  
+  i <- 1
+  feature.count <- 0
+  for (observation.file in observation.list) {
+    tbl_list[[i]] <- read_csv(observation.file)
+    feature.count <- feature.count + length(colnames(tbl_list[[i]]))
+    # print(observation.file)
+    # print(dim(tbl_list[[i]]))
+    
+    i <- i + 1
+  }
+  
+  reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
+    select(-contains("Metadata"))
+  colnames(reduced.observations) <- colnames(reduced.observations) %>%  
+    str_replace(.,"projection","")
+  
+  return(reduced.observations %>% janitor::clean_names())
+}
+
+read_observations <- function(result_path, pattern = "*Cells.csv", feature_group = NULL){
+  
+  if (is.null(feature_group)) {
+    
+    return( read_and_merge_observations(result_path = result_path, pattern = pattern) )
+    
+  } else if (feature_group=="areashape") {
+    
+    observation.list <- list.files(result_path, pattern = pattern, recursive = TRUE, full.names = TRUE)
+    observation.list <- observation.list[grepl(pattern = "resolution1", observation.list)]
+    
+    tbl <- read_csv(observation.list[[1]])
+    
+    areashape_observations <- tbl %>%
+      janitor::clean_names() %>% 
+      select(image_number, object_number, contains("area_shape"))
+    
+    return( areashape_observations )
+    
+  } else {
+    observation.list <- list.files(result_path, pattern = pattern, recursive = TRUE, full.names = TRUE)
+    observation.list <- observation.list[grepl(pattern = feature_group, observation.list)]
+
+    tbl_list <- c()
+    i <- 1
+
+    for (obs in observation.list) {
+      obs_split <- str_split(obs, pattern = "/")[[1]]
+      downsampling = obs_split[length(obs_split)-1]
+      tbl_list[[i]] <- read_csv(obs)
+      tbl_list[[i]]$downsampling <- downsampling
+      i <- i + 1
+    }
+    reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
+      janitor::clean_names() %>%
+      select(image_number, object_number, contains(feature_group), downsampling)
+
+    colnames(reduced.observations) <- colnames(reduced.observations) %>%
+      str_replace(.,"projection","")
+
+    return( reduced.observations )
+    
+  }
+  
+}
+
+reduced.observation <- read_and_merge_observations(results_list[1]) %>% 
+    mutate(id_observation = results_list[1] %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
+         ) %>%
+    mutate(id_observation_checksum = compute_observations_checksum(results_list[1] %>% as.character()) %>% as.character())
+
+# tic("Read and merge all - for")
+# for (result in results_list[1:1000]){
+#   t_list <- read_and_merge_observations(file.path(results_dir, measurement_id, result))
+# }
+# toc()
+
+# tic("Read and merge all - apply")
+# for (result in results_list[1:200]){
+#   t_list <- read_and_merge_observations(file.path(results_dir, measurement_id, result))
+# }
+# toc()
+```
+
+
+
+```{r}
+
+observation.areashape.test <- read_observations(results_list[1], feature_group = "areashape")
+observation.areashape.test <- observation.areashape.test %>% 
+  add_column(id_observation = "0000XXXXXXXX-Measurement_Y", id_observation_checksum = "random_placeholder")
+print(colnames(observation.areashape.test))
+
+observation.ch2.test <- read_observations(results_list[1], feature_group = "ch2")
+observation.ch2.test <- observation.ch2.test %>% 
+  add_column(id_observation = "0000XXXXXXXX-Measurement_Y", id_observation_checksum = "random_placeholder")
+print(colnames(observation.ch2.test))
+
+observation.ch3.test <- read_observations(results_list[1], feature_group = "ch3")
+observation.ch3.test <- observation.ch3.test %>% 
+  add_column(id_observation = "0000XXXXXXXX-Measurement_Y", id_observation_checksum = "random_placeholder")
+print(colnames(observation.ch3.test))
+
+observation.ch4.test <- read_observations(results_list[1], feature_group = "ch4")
+observation.ch4.test <- observation.ch4.test %>% 
+  add_column(id_observation = "0000XXXXXXXX-Measurement_Y", id_observation_checksum = "random_placeholder")
+print(colnames(observation.ch4.test))
+
+observation.ch5.test <- read_observations(results_list[1], feature_group = "ch5")
+observation.ch5.test <- observation.ch5.test %>% 
+  add_column(id_observation = "0000XXXXXXXX-Measurement_Y", id_observation_checksum = "random_placeholder")
+print(colnames(observation.ch5.test))
+
+observation.ch6.test <- read_observations(results_list[1], feature_group = "ch6")
+observation.ch6.test <- observation.ch6.test %>% 
+  add_column(id_observation = "0000XXXXXXXX-Measurement_Y", id_observation_checksum = "random_placeholder")
+print(colnames(observation.ch6.test))
+
+```
+
+# Database v2
+
+## Connect
+
+```{r eval=FALSE, include=FALSE}
+host_db_base = "c9k2hfiwt5mi.us-east-2.rds.amazonaws.com"
+
+dbname.v2 <- "biosensorv2"
+# dbname.v2 <- "biosensorv2-restored"
+
+con.v3 <- dbConnect(RPostgres::Postgres(), 
+                 dbname = dbname.v2, 
+                 host = paste(dbname.v2, host_db_base, sep = "."), 
+                 port = 5432, 
+                 user = "biosensor", 
+                 password = "biosensor")
+
+pool.v2 <- pool::dbPool(RPostgres::Postgres(),
+                       host = paste(dbname.v2, host_db_base, sep = "."),
+                       dbname = dbname.v2,
+                       port = 5432,
+                       user = "biosensor",
+                       password = "biosensor")
+```
+
+## Overview
+
+List tables and their columns
+
+```{r eval=FALSE, include=FALSE}
+table_list <- dbListTables(pool.v2)
+for (table_name in table_list) {
+  print(table_name)
+  table <- tbl(pool.v2, table_name)
+  # glimpse(table)
+  print(dim(table))
+}
+```
+
+# Database v3
+
+## Connect
+
+```{r}
+endpoint.v3 = "biosensorv3.cluster-c9k2hfiwt5mi.us-east-2.rds.amazonaws.com"
+dbname.v3 <- "biosensor"
+
+con.v3 <- dbConnect(RPostgres::Postgres(), 
+                 dbname = dbname.v3, 
+                 host = endpoint.v3, 
+                 port = 5432, 
+                 user = "biosensor", 
+                 password = "biosensor")
+
+pool.v3 <- pool::dbPool(RPostgres::Postgres(),
+                       dbname = dbname.v3,
+                       host = endpoint.v3,
+                       port = 5432,
+                       user = "biosensor",
+                       password = "biosensor")
+```
+
+## Create tables
+
+### Measurement table
+
+#### Read example data
+
+```{r}
+results_list <- dir(file.path(results_dir, measurement_id), pattern = "ch1", full.names = TRUE)
+
+# measurement <- tbl(pool.v3, "measurement")
+# existing_measurement <- measurement %>% dplyr::select(id_observation,id_observation_checksum) %>% distinct() %>% collect()
+
+new_measurement = tibble(id_barcode = measurement_id %>% str_extract(pattern = "0000\\d+"),
+         id_measurement = measurement_id,
+         id_observation = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
+         ) %>%
+    separate(id_observation, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_no", "iteration_no", "well", "field", "channel")) %>% 
+  select(-(t1:t3)) %>%
+    mutate(measurement_no = str_extract(measurement_no, pattern = "\\d") %>% as.numeric(),
+           iteration_no = str_extract(iteration_no, pattern = "\\d") %>% as.numeric()) %>%
+    mutate(full_path = results_list) %>% rowwise() %>% 
+    mutate(id_observation_checksum = compute_observations_checksum(full_path %>% as.character()) %>% as.character())
+
+```
+
+#### Create measurement table
+
+```{r}
+# dbRemoveTable(con.v3, "measurement")
+# dbCreateTable(con.v3, "measurement", new_measurement)
+# dbExecute(con.v3, "TRUNCATE TABLE measurement")
+
+table_list <- dbListTables(con.v3)
+for (table_name in table_list) {
+  print(table_name)
+  table <- tbl(pool.v3, table_name)
+  glimpse(table)
+  # print(colnames(table))
+}
+```
+
+Adding only new measurements
+
+```{r}
+# files <- list.files(file.path(results_dir, measurement_id), pattern = "ch1", full.names = TRUE) %>% paste0(., "/resolution1/", "measurement_ch2_Cells.csv")
+results_list <- dir(file.path(results_dir, measurement_id), pattern = "ch1", full.names = TRUE)
+results_list.downsampling <- c()
+for (result in results_list[1:10]) {
+  print(result)
+  sub.list <- list.dirs(result, full.names = TRUE)
+  for (sub.folder in sub.list) {
+    print(sub.folder)
+    measurement.files <- dir(sub.folder, pattern = "*Cells.csv", full.names = TRUE)
+    print(measurement.files)
+  }
+  # print(sub.list)
+}
+
+tic("New measurement")
+measurement <- tbl(pool.v3, "measurement")
+existing_measurement <- measurement %>% 
+  dplyr::select(id_observation,id_observation_checksum) %>% 
+  distinct() %>% 
+  collect()
+
+new_measurement = tibble(id_barcode = measurement_id %>% str_extract(pattern = "0000\\d+"),
+         id_measurement = measurement_id,
+         id_observation = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
+         ) %>%
+    separate(id_observation, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_no", "iteration_no", "well", "field", "channel")) %>% 
+  select(-(t1:t3)) %>%
+    mutate(measurement_no = str_extract(measurement_no, pattern = "\\d") %>% as.numeric(),
+           iteration_no = str_extract(iteration_no, pattern = "\\d") %>% as.numeric()) %>%
+    mutate(full_path = results_list) %>% rowwise() %>% 
+    mutate(id_observation_checksum = compute_observations_checksum(full_path %>% as.character()) %>% as.character()) %>%
+    anti_join(existing_measurement)
+toc()
+
+tic("Adding to database")
+new_measurement %>%
+    dbWriteTable(pool.v3, "measurement", ., append = TRUE)
+toc()
+```
+
+### Observation table
+
+#### Read example data
+
+```{r}
+reduced.observation <- read_and_merge_observations(results_list[1]) %>% 
+    mutate(id_observation = results_list[1] %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
+         ) %>%
+    mutate(id_observation_checksum = compute_observations_checksum(results_list[1] %>% as.character()) %>% as.character())
+```
+
+
+#### Creating 'observation' table
+
+```{r}
+# dbCreateTable(con.v3, "observation", reduced.observation)
+# dbRemoveTable(con.v3, "observation") # completely deletes table schema
+# dbExecute(con.v3, "TRUNCATE TABLE observation2") # drops all rows from the table
+```
+
+
+
+```{r}
+# tic("adding observations")
+# 
+# new_measurement[1:1000,] %>%
+#     unite("observation", contains("observation"), sep = "___") %>%
+#     mutate(data = furrr::future_map2(observation,
+#                                      full_path, 
+#                                      ~ {read_and_merge_observations(.y) %>%
+#                                        mutate(observation = .x) %>%
+#                                        separate(observation, c("id_observation", "id_observation_checksum"), sep = "___", ) %>%
+#                                        dbWriteTable(pool.v2, "observation", ., append = TRUE)
+#                                     print(paste0("appended ", .y))
+#                                     flush.console() }
+#     ))
+# toc()
+```
+
+```{r message=FALSE, warning=FALSE}
+
+tic("adding observations")
+
+new_measurement_2 <- new_measurement %>% 
+  unite("observation", contains("observation"), sep = "___") 
+
+furrr::future_map2(new_measurement_2$observation, 
+                   new_measurement_2$full_path,
+                     ~ { read_and_merge_observations(.y) %>%
+                           mutate(observation = .x) %>%
+                           separate(observation, c("id_observation", "id_observation_checksum"), sep = "___", ) %>%
+                           dbWriteTable(pool.v2, "observation", ., append = TRUE)
+                         # print(paste0("appended ", .y))
+                         # flush.console() 
+                       }
+    )
+toc()
+
+#1-500: 457.342sec
+#501-1000: 454.088 sec elapsed
+#all: 8000 sec
+```
+
+
+
+```{r}
+```
+
+
+```{r}
+# for (row_num in 1:nrow(new_measurement)) {
+# for (row_num in c(1,2)) {
+#   row <- new_measurement[row_num,]
+#   glimpse(row)
+#   observation <- read_and_merge_observations( row[1,"full_path"] %>% as.character() )
+#   observation$id_observation <- row[1,"id_observation"] %>% as.character()
+#   observation$id_observation_checksum <- compute_observations_checksum( row[1,"full_path"] %>% as.character() )
+#   glimpse(observation)
+# }
+```
+
+## Checking tables
+
+### Overview of tables
+
+```{r}
+# observation <- tbl(pool.v3, "observation")
+# glimpse(observation)
+# 
+# count.sql <- "SELECT COUNT(*) FROM measurement"
+# DBI::dbGetQuery(con.v3, count.sql)
+# 
+# count.sql <- "SELECT COUNT(*) FROM observation"
+# DBI::dbGetQuery(con.v3, count.sql)
+```
+
+
+```{r}
+measurement <- tbl(pool.v3, "measurement")
+observation <- tbl(pool.v3, "observation")
+# glimpse(measurement)
+# measurement %>% group_by(id_measurement) %>% count() %>% collect()
+# observation %>% select(id_observation) %>% left_join(measurement %>% select(id_barcode, id_measurement, id_observation)) %>% group_by(id_measurement) %>% count() %>%  collect()
+```
+
+```{r}
+measurement.sample <- measurement %>% 
+  head(1000) %>% 
+  collect()
+```
+
+
+```{r}
+observation_columns <- colnames(observation)
+measurement_columns <- colnames(measurement)
+```
+
+```{r}
+tic()
+# observation %>% select(id_observation)
+summary_measurement <- measurement %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+  
+summary_observations <- measurement %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+toc()
+```
+```{r}
+measurement_ids_m <- unique(summary_measurement$id_measurement)
+measurement_ids_o <- unique(summary_observations$id_measurement)
+print(setdiff(measurement_ids_m, measurement_ids_o))
+print(setdiff(measurement_ids_o, measurement_ids_m))
+```
+
+### Check specific barcode
+
+```{r}
+barcode_id <- "000012116603"
+observation_for_barcode <- measurement %>% 
+  filter(id_barcode==barcode_id) %>% 
+  select(id_barcode, id_measurement, id_observation, well, measurement_no, iteration_no) %>% 
+  left_join(observation %>% select(id_observation)) %>% 
+  group_by(measurement_no, iteration_no, well) %>% 
+  count() %>% 
+  collect()
+```
+```{r}
+observation_for_barcode <- observation_for_barcode %>% 
+  mutate(row = substr(well,1,1), col = substr(well,2,3))
+
+```
+
+```{r}
+ggplot(observation_for_barcode, aes(row, col, fill=n)) %>% 
+  facet_grid(measurement_no~iteration_no) %>% 
+  geom_tile()
+```
+
+## WARNING! Deletion of data!
+
+!!! WARNING! - DANGEROUS COMMANDS !!!
+
+```{r eval=FALSE, include=FALSE}
+# tic()
+# deleteQuery <- glue::glue_sql("DELETE FROM measurement WHERE id_measurement LIKE '%000012116703__2023-02-03T14_52_23-Measurement_2%'", .con=pool.v3)
+# dbExecute(statement = deleteQuery, con=pool.v3)
+# toc()
+# tic()
+# # #
+# deleteQuery <- glue::glue_sql("DELETE FROM observation WHERE id_observation LIKE '%000012116703__2023-02-03T14_52_23-Measurement_2%'", .con=pool.v3)
+# dbExecute(statement = deleteQuery, con=pool.v3)
+# toc()
+```
+
+# Database v3 downsampling
+
+## Connect
+
+```{r}
+endpoint.v3.ds = "biosensorv3-downsampling-cluster.c9k2hfiwt5mi.us-east-2.rds.amazonaws.com"
+dbname.v3.ds <- "biosensor"
+
+con.v3.ds <- dbConnect(RPostgres::Postgres(), 
+                 dbname = dbname.v3.ds, 
+                 host = endpoint.v3.ds, 
+                 port = 5432, 
+                 user = "biosensor", 
+                 password = "biosensor")
+
+pool.v3.ds <- pool::dbPool(RPostgres::Postgres(),
+                       dbname = dbname.v3.ds,
+                       host = endpoint.v3.ds,
+                       port = 5432,
+                       user = "biosensor",
+                       password = "biosensor")
+```
+
+## Overview
+
+```{r}
+table_list <- dbListTables(pool.v3.ds)
+for (table_name in table_list) {
+  print(table_name)
+  table <- tbl(pool.v3.ds, table_name)
+  glimpse(table)
+  # print(colnames(table))
+}
+
+# m.table <- tbl(pool.v3.ds, "measurement") %>% collect()
+```
+
+## Create tables
+
+### Measurement table
+
+```{r}
+# dbCreateTable(con.v3.ds, "measurement", new_measurement)
+# dbExecute(con.v3.ds, "TRUNCATE TABLE measurement")
+# dbRemoveTable(con.v3.ds, "measurement")
+
+table_list <- dbListTables(con.v3.ds)
+for (table_name in table_list) {
+  print(table_name)
+  table <- tbl(pool.v3.ds, table_name)
+  glimpse(table)
+  # print(colnames(table))
+}
+```
+
+### Observation tables
+
+#### Erasing table contents
+
+```{r}
+
+# dbCreateTable(con.v3.ds, "measurement", new_measurement)
+# dbExecute(con.v3.ds, "TRUNCATE TABLE measurement")
+
+# dbRemoveTable(con.v3.ds, "observation")
+# dbExecute(con.v3.ds, "TRUNCATE TABLE observation")
+
+# dbCreateTable(con.v3.ds, "observation_areashape", observation.areashape.test)
+# dbCreateTable(con.v3.ds, "observation_ch2", observation.ch2.test)
+# dbCreateTable(con.v3.ds, "observation_ch3", observation.ch3.test)
+# dbCreateTable(con.v3.ds, "observation_ch4", observation.ch4.test)
+# dbCreateTable(con.v3.ds, "observation_ch5", observation.ch5.test)
+# dbCreateTable(con.v3.ds, "observation_ch6", observation.ch6.test)
+
+# for (feature_group in c("areashape","ch2","ch3","ch4", "ch5", "ch6")) {
+#   dbRemoveTable(con.v3.ds, paste0("observation_", feature_group))
+# }
+
+# for (feature_group in c("areashape","ch2","ch3","ch4", "ch5", "ch6")) {
+#   dbExecute(con.v3.ds, paste("TRUNCATE", "TABLE", paste0("observation_", feature_group)))
+# }
+
+```
+
+
+## Checking tables
+
+```{r}
+# observation <- tbl(pool.v3, "observation")
+# # glimpse(observation)
+# 
+# count.sql <- "SELECT COUNT(*) FROM measurement"
+# DBI::dbGetQuery(con.v3, count.sql)
+# 
+# count.sql <- "SELECT COUNT(*) FROM observation"
+# DBI::dbGetQuery(con.v3, count.sql)
+```
+
+
+```{r}
+measurement.downsampling <- tbl(pool.v3.ds, "measurement")
+observation.downsampling.areashape <- tbl(pool.v3.ds, "observation_areashape")
+# glimpse(measurement)
+# measurement %>% group_by(id_measurement) %>% count() %>% collect()
+# observation %>% select(id_observation) %>% left_join(measurement %>% select(id_barcode, id_measurement, id_observation)) %>% group_by(id_measurement) %>% count() %>%  collect()
+```
+
+
+```{r}
+table_list <- dbListTables(con.v3.ds)
+for (table_name in table_list) {
+  print(table_name)
+  table <- tbl(pool.v3.ds, table_name)
+  glimpse(table)
+  # print(colnames(table))
+}
+```
+
+```{r}
+# tic()
+# measurement.downsampling.filtered <- measurement.downsampling %>% 
+#   select(id_barcode, id_measurement, id_observation, id_observation_checksum, well) %>% 
+#   filter(id_measurement == "000012116403__2022-09-30T15_08_51-Measurement_5") %>% 
+#   group_by(id_barcode, id_measurement, well) %>% 
+#   count() %>% 
+#   collect()
+# toc()
+# tic()
+# observation.downsampling.filtered <- observation %>% 
+#   select("id_observation","id_observation_checksum", "image_number", "object_number") %>% 
+#   filter(., grepl("000012116403__2022-09-30T15_08_51-Measurement_5", id_observation)) %>%
+#   collect()
+# toc()
+# tic()
+# measurement_head <- measurement %>% head(10) %>% collect()
+# toc()
+```
+
+```{r}
+tic()
+# observation %>% select(id_observation)
+summary.measurement.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+  
+summary.observations.areashape.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation.downsampling.areashape %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+toc()
+```
+
+
+```{r}
+tic()
+observation_to_measurement_head <- measurement %>% head(10) %>% select(id_barcode, id_measurement, id_observation, id_observation_checksum, well) %>% #collect()
+  merge(., observation %>% select("id_observation","id_observation_checksum", "image_number", "object_number"), by = c("id_observation","id_observation_checksum"), all.x = TRUE) %>% 
+  collect()
+toc()
+```
+
+```{r}
+observation_columns <- colnames(observation)
+measurement_columns <- colnames(measurement)
+```
+
+```{r}
+tic()
+# observation %>% select(id_observation)
+summary_measurement <- measurement %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+  
+summary_observations <- measurement %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+toc()
+```
+```{r}
+measurement_ids_m <- unique(summary_measurement$id_measurement)
+measurement_ids_o <- unique(summary_observations$id_measurement)
+print(setdiff(measurement_ids_m, measurement_ids_o))
+print(setdiff(measurement_ids_o, measurement_ids_m))
+```
+
+## Investigating features
+
+```{r}
+
+names(resolution1.ch2.features) <- tolower(names(resolution1.ch2.features))
+names(resolution2.ch2.features) <- tolower(names(resolution2.ch2.features))
+
+names(mid2.ch3ch4.features) <- tolower(names(mid2.ch3ch4.features))
+names(mid24.ch3ch4.features) <- tolower(names(mid24.ch3ch4.features))
+names(mid4.ch3ch4.features) <- tolower(names(mid4.ch3ch4.features))
+names(mid2.ch5ch6.features) <- tolower(names(mid2.ch5ch6.features))
+names(mid24.ch5ch6.features) <- tolower(names(mid24.ch5ch6.features))
+names(mid4.ch5ch6.features) <- tolower(names(mid4.ch5ch6.features))
+
+# collect indices for each feature group
+areashape.feature.indices <- colnames(mid2.ch3ch4.features) %>% grep(pattern = "areashape")
+
+ch2.feature.indices <- colnames(resolution1.ch2.features) %>% grep(pattern = "ch2")
+
+ch3.feature.indices <- colnames(mid2.ch3ch4.features) %>%  grep(pattern = "ch3")
+ch4.feature.indices <- colnames(mid2.ch3ch4.features) %>%  grep(pattern = "ch4")
+ch5.feature.indices <- colnames(mid2.ch3ch4.features) %>%  grep(pattern = "ch5")
+ch5.feature.indices <- colnames(mid2.ch5ch6.features) %>%  grep(pattern = "ch5")
+ch6.feature.indices <- colnames(mid2.ch5ch6.features) %>%  grep(pattern = "ch6")
+
+# collect features for each feature group
+areashape.features <- colnames(mid2.ch3ch4.features)[areashape.feature.indices]
+
+ch2.features <- colnames(resolution1.ch2.features)[ch2.feature.indices]
+
+ch3.features <- colnames(mid2.ch3ch4.features)[ch3.feature.indices]
+ch4.features <- colnames(mid2.ch3ch4.features)[ch4.feature.indices]
+ch5.features <- colnames(mid2.ch5ch6.features)[ch5.feature.indices]
+ch6.features <- colnames(mid2.ch5ch6.features)[ch6.feature.indices]
+
+left_out_features <-setdiff(Reduce(union, list(names(mid2.ch3ch4.features), names(mid2.ch5ch6.features), names(resolution1.ch2.features)) ), Reduce(union, list(areashape.features, ch2.features, ch3.features, ch4.features, ch5.features, ch6.features)))
+
+print(left_out_features)
+
+current.colnames <- colnames(reduced.observation)
+x <- setdiff(current.colnames, list(names(mid2.ch3ch4.features), names(mid2.ch5ch6.features), names(resolution1.ch2.features)))
+print(x)
+
+```
+
+```{r}
+observation.list <- list.files(result_path, pattern = pattern, recursive = TRUE, full.names = TRUE)
+  # print(result_path)
+  # print(observation.list)
+  
+  tbl_list <- c()
+  
+  i <- 1
+  feature.count <- 0
+  for (observation.file in observation.list) {
+    tbl_list[[i]] <- read_csv(observation.file)
+    feature.count <- feature.count + length(colnames(tbl_list[[i]]))
+    print(observation.file)
+    print(dim(tbl_list[[i]]))
+    
+    i <- i + 1
+  }
+  
+  reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
+    select(-contains("Metadata"))
+  colnames(reduced.observations) <- colnames(reduced.observations) %>%  
+    str_replace(.,"projection","")
+  
+  return(reduced.observations %>% janitor::clean_names())
+}
+
+# observation.checksum <- compute_observations_checksum(results_list[1])
+reduced.observation <- read_and_merge_observations(results_list[1]) %>% 
+    mutate(id_observation = results_list[1] %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
+         ) %>%
+    mutate(id_observation_checksum = compute_observations_checksum(results_list[1] %>% as.character()) %>% as.character())
+```
+
+
+## Fetch features
+
+```{r}
+tic()
+
+measurement.ds <- tbl(pool.v3.ds, "measurement")
+observation.ds.areashape <- tbl(pool.v3.ds, "observation_areashape")
+observation.ds.ch2 <- tbl(pool.v3.ds, "observation_ch2")
+observation.ds.ch3 <- tbl(pool.v3.ds, "observation_ch3")
+observation.ds.ch4 <- tbl(pool.v3.ds, "observation_ch4")
+observation.ds.ch5 <- tbl(pool.v3.ds, "observation_ch5")
+observation.ds.ch6 <- tbl(pool.v3.ds, "observation_ch6")
+
+# id_barcode     <- "000012117103"
+# id_measurement <- "000012117103__2023-03-10T13_13_16-Measurement_1"
+# id_observation <- "000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1"
+# cell <- measurement.downsampling %>% select(-id_observation_checksum) %>% 
+#   filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+#   merge(observation.ds.areashape %>% 
+#           select(-id_observation_checksum) %>% 
+#           filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1"), 
+#         by="id_observation") %>% 
+#   merge(observation.ds.ch2 %>% 
+#           select(-id_observation_checksum) %>% 
+#           filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1")) %>% 
+#   collect()
+
+toc()
+```
+```{r}
+tic()
+
+id.obs <- "000012117203__2023-03-13T15_17_09-Measurement_1-sk1-A09-f01-ch1"
+
+m.ds <- measurement.downsampling %>% select(-id_observation_checksum) %>% 
+  filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+  collect()
+
+o.ds.a <- observation.ds.areashape %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+  collect()
+
+o.ds.ch2 <- observation.ds.ch2 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+  collect()
+
+o.ds.ch3 <- observation.ds.ch3 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+  collect()
+
+o.ds.ch4 <- observation.ds.ch4 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+  collect()
+
+o.ds.ch5 <- observation.ds.ch5 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+  collect()
+
+o.ds.ch6 <- observation.ds.ch6 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1") %>% 
+  collect()
+toc()
+```
+
+
+```{r}
+tic()
+
+id.obs <- "000012117203__2023-03-13T15_17_09-Measurement_1-sk1-A09-f01-ch1"
+
+m.ds <- measurement.downsampling %>% select(-id_observation_checksum) %>% 
+  filter(id_observation==id.obs) %>% 
+  collect()
+
+o.ds.a <- observation.ds.areashape %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation==id.obs) %>% 
+  collect()
+
+o.ds.ch2 <- observation.ds.ch2 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation==id.obs) %>% 
+  collect()
+
+o.ds.ch3 <- observation.ds.ch3 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation==id.obs) %>% 
+  collect()
+
+o.ds.ch4 <- observation.ds.ch4 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation==id.obs) %>% 
+  collect()
+
+o.ds.ch5 <- observation.ds.ch5 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation==id.obs) %>% 
+  collect()
+
+o.ds.ch6 <- observation.ds.ch6 %>% 
+  select(-id_observation_checksum) %>% 
+  filter(id_observation==id.obs) %>% 
+  collect()
+
+toc()
+```
+
+
+```{r}
+cell.morphology.all <- m.ds %>% 
+  merge(o.ds.a) %>% 
+  merge(o.ds.ch2 %>% filter(downsampling=="resolution1") %>% select(-downsampling)) %>% 
+  merge(o.ds.ch3 %>% filter(downsampling=="mid24") %>% select(-downsampling)) #%>%
+  # merge(o.ds.ch4 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>% 
+  # merge(o.ds.ch5 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>% 
+  # merge(o.ds.ch6 %>% filter(downsampling=="mid24") %>% select(-downsampling))
+
+
+```
+
+## List unique downsampling for each table
+```{r}
+x <- measurement.downsampling %>% 
+  select(id_barcode) %>% 
+  unique() 
+```
+
+
+```{r}
+x <- dbSendQuery(con.v3.ds, paste("SELECT", "DISTINCT", "id_barcode", "FROM", "measurement"))
+print(x)
+x2 <- measurement.downsampling %>% 
+  select(id_barcode) %>% 
+  collect() %>% 
+  unique()
+```
+
+```{r}
+
+# for (feature_group in c("ch2","ch3","ch4", "ch5", "ch6")) {
+#   x <- dbSendQuery(con.v3.ds, paste("SELECT", "DISTINCT", "downsampling", "FROM", paste0("observation_", feature_group)))
+#   print(x)
+# }
+
+x2 <- tbl(pool.v3.ds, "observation_ch2") %>% 
+  select(downsampling) %>% 
+  collect() %>% 
+  unique()
+print(x2)
+
+x2 <- tbl(pool.v3.ds, "observation_ch3") %>% 
+  select(downsampling) %>% 
+  collect() %>% 
+  unique()
+print(x2)
+
+x2 <- tbl(pool.v3.ds, "observation_ch4") %>% 
+  select(downsampling) %>% 
+  collect() %>% 
+  unique()
+print(x2)
+
+x2 <- tbl(pool.v3.ds, "observation_ch5") %>% 
+  select(downsampling) %>% 
+  collect() %>% 
+  unique()
+print(x2)
+
+x2 <- tbl(pool.v3.ds, "observation_ch6") %>% 
+  select(downsampling) %>% 
+  collect() %>% 
+  unique()
+print(x2)
+
+# SELECT DISTINCT column1, column2, ...FROM table_name;
+```
+```{r}
+glimpse(tbl(pool.v3.ds, "observation_ch4"))
+```
+
+```{r}
+# x2 <- tbl(pool.v3.ds, "observation_ch4") %>%
+#   select(object_number) %>%
+#   collect() %>%
+#   unique()
+# print(x2)
+
+x2 <- tbl(pool.v3.ds, "observation_ch4") %>%
+  select(image_number) %>%
+  collect() %>%
+  unique()
+print(x2)
+```
+
