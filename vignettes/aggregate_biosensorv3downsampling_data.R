@@ -19,7 +19,8 @@ library(tryCatchLog)
 ## preparing data---------------------------------------------------------------------------------------
 
 tic("Preparing data")
-measurement_id = "000012116603__2023-01-24T14_33_15-Measurement_3"
+#measurement_id = "000012117203__2023-03-13T15_17_09-Measurement_1"
+measurement_id = args = commandArgs(trailingOnly=TRUE)
 
 bucket_dir = "s3://ascstore/flatfieldv2/"             # AWS S3 folder containing single-cell morphological measurements (or observations)
 results_dir = "/home/ubuntu/dcp_helper/data/results/" # temporary local folder to pull single cell data
@@ -147,11 +148,13 @@ read_observations <- function(result_path, pattern = "*Cells.csv", feature_group
 read_and_insert_observation <- function(combined_observation_id, result_path, pattern = "*Cells.csv", feature_group = NULL, conn=NULL){
 
   if (is.null(conn)) {
-    return (0)
+
+    return(0)
+
   }
   if (is.null(feature_group)) {
 
-    return( 0 )
+    return(0)
 
   } else if (feature_group=="areashape") {
 
@@ -213,7 +216,11 @@ read_and_insert_observation <- function(combined_observation_id, result_path, pa
         tbl_list[[i]]$downsampling <- downsampling
         i <- i + 1
       }
-      reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
+      # reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
+      #   janitor::clean_names() %>%
+      #   select(image_number, object_number, contains(feature_group), downsampling)
+      #
+      reduced.observations <- Reduce(function(x, y) rbind(x, y, all.x = TRUE), tbl_list) %>%
         janitor::clean_names() %>%
         select(image_number, object_number, contains(feature_group), downsampling)
 
