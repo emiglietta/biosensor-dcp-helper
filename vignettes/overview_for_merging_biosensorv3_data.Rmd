@@ -1,5 +1,5 @@
 ---
-title: "overview_for_merging_biosensorv2_data"
+title: "overview_for_merging_biosensorv3_data"
 author: "mcsaba"
 date: "11/2/2021"
 output: html_document
@@ -29,7 +29,7 @@ library(furrr)
 
 ```{r pressure, echo=FALSE}
 tic("Preparing data")
-measurement_id = "000012112403__2021-06-09T14_14_23-Measurement_1"
+measurement_id = "000012116603__2023-01-20T18_18_37-Measurement_1"
 aws_output_dir = "s3://ascstore/flatfieldv2/"
 results_dir = "/home/ubuntu/dcp_helper/data/results/"
 

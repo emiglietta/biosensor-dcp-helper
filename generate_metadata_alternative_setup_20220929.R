@@ -816,6 +816,38 @@ for(i in 1:length(channel_measurement_n)){
 }
 toc()
 
+phase1bash.file.conn <- file(paste0(new_path_base, "submit_phase1.sh"))
+writeLines(c("#!/bin/sh", "",
+             "./quick_group_jobs_bash_segmentation_ch1_.sh",
+             "./quick_group_jobs_bash_ffc_brightfield_.sh",
+             "./quick_group_jobs_bash_ffc_ch3_.sh",
+             "./quick_group_jobs_bash_ffc_ch4_.sh",
+             "./quick_group_jobs_bash_ffc_ch5_.sh",
+             "./quick_group_jobs_bash_ffc_ch6_.sh"),
+           con=phase1bash.file.conn)
+close(phase1bash.file.conn)
+system(paste0("sudo chmod +x ", "submit_phase1.sh"))
+
+phase2bash.file.conn <- file(paste0(new_path_base, "submit_phase2.sh"))
+writeLines(c("#!/bin/sh", "",
+             "./quick_group_jobs_bash_projection_ch2_.sh",
+             "./quick_group_jobs_bash_maximumprojection_ch3_.sh",
+             "./quick_group_jobs_bash_maximumprojection_ch4_.sh",
+             "./quick_group_jobs_bash_maximumprojection_ch5_.sh",
+             "./quick_group_jobs_bash_maximumprojection_ch6_.sh"),
+           con=phase2bash.file.conn)
+close(phase2bash.file.conn)
+system(paste0("sudo chmod +x ", "submit_phase2.sh"))
+
+phase3bash.file.conn <- file(paste0(new_path_base, "submit_phase3.sh"))
+writeLines(c("#!/bin/sh", "",
+             "./quick_group_jobs_bash_measurement_ch2_.sh",
+             "./quick_group_jobs_bash_measurement_ch3_ch4_.sh",
+             "./quick_group_jobs_bash_measurement_ch5_ch6_.sh"),
+           con=phase3bash.file.conn)
+close(phase3bash.file.conn)
+system(paste0("sudo chmod +x ", paste("submit_phase3.sh")))
+
 measurement.finish.time <- Sys.time()
 # writeLines(c("Measurement finished:", measurement.finish.time), fileConn)
 
