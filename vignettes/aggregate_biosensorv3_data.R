@@ -74,20 +74,28 @@ read_and_merge_observations <- function(result_path, pattern = "*Cells.csv"){
   # print(result_path)
   # print(observation.list)
 
-  tbl_list <- c()
+  if (length(observation.list)<1) {
 
-  i <- 1
-  for (observation.file in observation.list) {
-    tbl_list[[i]] <- read_csv(observation.file)
-    i <- i + 1
+    print(paste0("No observation found for this measurement: ", result_path))
+    return (NULL)
+
+  } else {
+
+    tbl_list <- c()
+
+    i <- 1
+    for (observation.file in observation.list) {
+      tbl_list[[i]] <- read_csv(observation.file)
+      i <- i + 1
+    }
+
+    reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
+      select(-contains("Metadata"))
+    colnames(reduced.observations) <- colnames(reduced.observations) %>%
+      str_replace(.,"projection","")
+
+    return(reduced.observations %>% janitor::clean_names())
   }
-
-  reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
-    select(-contains("Metadata"))
-  colnames(reduced.observations) <- colnames(reduced.observations) %>%
-    str_replace(.,"projection","")
-
-  return(reduced.observations %>% janitor::clean_names())
 }
 
 # test functions

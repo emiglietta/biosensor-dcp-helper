@@ -474,6 +474,8 @@ observation_columns <- colnames(observation)
 ### Summary 'measurement' and 'observation' 
 
 ```{r}
+# ~3762.154 sec
+
 tic()
 # observation %>% select(id_observation)
 summary_measurement <- measurement %>% 
@@ -496,7 +498,7 @@ toc()
 ```{r}
 tic()
 
-barcode_id <- "000012118103"
+barcode_id <- "000012118203"
 
 experiment_object_data <-  measurement %>% 
   filter(id_barcode==barcode_id) %>% 
@@ -576,11 +578,11 @@ print(setdiff(measurement_ids_o, measurement_ids_m))
 
 ```{r eval=FALSE, include=FALSE}
 # tic()
-# deleteQuery <- glue::glue_sql("DELETE FROM measurement WHERE id_measurement LIKE '%000012118003__2023-05-21T14_47_08-Measurement_3%'", .con=pool.v3)
+# deleteQuery <- glue::glue_sql("DELETE FROM measurement WHERE id_measurement LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3)
 # dbExecute(statement = deleteQuery, con=pool.v3)
 # toc()
 # tic()
-# deleteQuery <- glue::glue_sql("DELETE FROM observation WHERE id_observation LIKE '%000012118003__2023-05-21T14_47_08-Measurement_3%'", .con=pool.v3)
+# deleteQuery <- glue::glue_sql("DELETE FROM observation WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3)
 # dbExecute(statement = deleteQuery, con=pool.v3)
 # toc()
 ```
@@ -724,6 +726,9 @@ for (table_name in table_list) {
 ```
 
 ```{r}
+
+# ~1 minute
+
 tic()
 # observation %>% select(id_observation)
 summary.measurement.downsampling <- measurement.downsampling %>% 
@@ -888,6 +893,8 @@ observation.ds.ch6 <- tbl(pool.v3.ds, "observation_ch6")
 toc()
 ```
 ```{r}
+# ~150 sec
+
 tic()
 
 id.obs <- "000012117203__2023-03-13T15_17_09-Measurement_1-sk1-A09-f01-ch1"
@@ -1057,37 +1064,39 @@ ggsave(paste0(barcode_id, "_ds_", t, "_object_count.pdf"), plot=g, path="~/mcsab
 ```{r eval=FALSE, include=FALSE}
 tic()
 
-measurement_id_to_truncate <- "000012118003__2023-05-21T14_47_08-Measurement_3"
+measurement_id_to_truncate <- "000012118303__2023-06-02T13_16_13-Measurement_1"
 
 # deleteQuery <- glue::glue_sql("DELETE FROM measurement WHERE id_measurement LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
 
 deleteQuery <- glue::glue_sql("DELETE FROM measurement WHERE id_measurement LIKE {measurement_id_to_truncate}", .con=con.v3.ds)
+print(deleteQuery)
 dbExecute(statement = deleteQuery, con=con.v3.ds)
 
 toc()
-tic()
-# #
+
 # for (feature_group in c("areashape", "ch2", "ch3", "ch4", "ch5", "ch6")) {
 #   tic()
-#   deleteQuery <- glue::glue_sql("DELETE FROM observation_{feature_group} WHERE id_observation LIKE '{measurement_id_to_truncate}'", .con=pool.v3.ds)
-#   dbExecute(statement = deleteQuery, con=pool.v3.ds)
+#   deleteQuery <- gsub("'","",glue::glue_sql("DELETE FROM observation_{feature_group} WHERE id_observation LIKE \"{measurement_id_to_truncate}\"", .con=con.v3.ds))
+#   print(deleteQuery)
+#   # dbExecute(statement = deleteQuery, con=con.v3.ds)
 #   toc()
 # }
-# 
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_areashape WHERE id_observation LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
+
+tic()
+# deleteQuery <- glue::glue_sql("DELETE FROM observation_areashape WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch2 WHERE id_observation LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
+# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch2 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch3 WHERE id_observation LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
+# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch3 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch4 WHERE id_observation LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
+# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch4 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch5 WHERE id_observation LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
+# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch5 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch6 WHERE id_observation LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
+# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch6 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# toc()
+toc()
 ```
 
 ```{r}

@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rbuildignore
 inst/doc
 data/password.txt
 glacier-restore.txt

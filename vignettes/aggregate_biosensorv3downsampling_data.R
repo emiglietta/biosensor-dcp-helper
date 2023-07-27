@@ -220,7 +220,11 @@ read_and_insert_observation <- function(combined_observation_id, result_path, pa
       #   janitor::clean_names() %>%
       #   select(image_number, object_number, contains(feature_group), downsampling)
       #
-      reduced.observations <- Reduce(function(x, y) rbind(x, y, all.x = TRUE), tbl_list) %>%
+      # reduced.observations <- Reduce(function(x, y) rbind(x, y, all.x = TRUE), tbl_list) %>%
+      #   janitor::clean_names() %>%
+      #   select(image_number, object_number, contains(feature_group), downsampling)
+
+      reduced.observations <- Reduce(function(x, y) bind_rows(x, y), tbl_list) %>%
         janitor::clean_names() %>%
         select(image_number, object_number, contains(feature_group), downsampling)
 
@@ -299,7 +303,7 @@ new_measurement = tibble(id_barcode = measurement_id %>% str_extract(pattern = "
     anti_join(existing_measurement)
 toc()
 
-# new_measurement <- new_measurement %>% head(2000)
+# new_measurement <- new_measurement %>% head(1000)
 # new_measurement <- new_measurement %>%
 #   filter(id_observation=="000012117103__2023-03-10T13_13_16-Measurement_1-sk2-N04-f01-ch1")
 
@@ -367,7 +371,7 @@ for (feature_group in c("areashape", "ch2", "ch3", "ch4", "ch5", "ch6")) {
 
 toc()
 
-system(paste0("rm -r ", paste0(results_dir, measurement_id)))
+# system(paste0("rm -r ", paste0(results_dir, measurement_id)))
 
 #1-500: 457.342sec
 #501-1000: 454.088 sec elapsed
