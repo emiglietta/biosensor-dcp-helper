@@ -371,7 +371,7 @@ for (feature_group in c("areashape", "ch2", "ch3", "ch4", "ch5", "ch6")) {
 
 toc()
 
-# system(paste0("rm -r ", paste0(results_dir, measurement_id)))
+system(paste0("rm -r ", paste0(results_dir, measurement_id)))
 
 #1-500: 457.342sec
 #501-1000: 454.088 sec elapsed

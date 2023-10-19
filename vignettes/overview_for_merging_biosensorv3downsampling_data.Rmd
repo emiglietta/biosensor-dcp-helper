@@ -727,7 +727,7 @@ for (table_name in table_list) {
 
 ```{r}
 
-# ~1 minute
+# last run took 187 secs
 
 tic()
 # observation %>% select(id_observation)
@@ -747,41 +747,162 @@ toc()
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 tic()
 observation_to_measurement_head <- measurement %>% head(10) %>% select(id_barcode, id_measurement, id_observation, id_observation_checksum, well) %>% #collect()
   merge(., observation %>% select("id_observation","id_observation_checksum", "image_number", "object_number"), by = c("id_observation","id_observation_checksum"), all.x = TRUE) %>% 
   collect()
 toc()
 ```
-
 ```{r}
-observation_columns <- colnames(observation)
-measurement_columns <- colnames(measurement)
+v3.measurements <- unique(summary_observations$id_measurement)
+v3ds.measurements <- unique(summary.observations.areashape.downsampling$id_measurement)
+
+
+# idx <- (v3ds.measurements %in% v3.measurements)
+# missing.measurements <- v3.measurements[!(v3ds.measurements %in% v3.measurements)]
+
+missing.measurements <- setdiff(v3.measurements, v3ds.measurements)
+
+print(missing.measurements)
 ```
 
-```{r}
-tic()
-# observation %>% select(id_observation)
-summary_measurement <- measurement %>% 
-  select(id_barcode, id_measurement, id_observation) %>% 
-  group_by(id_barcode, id_measurement) %>% 
-  count() %>% 
-  collect()
-  
-summary_observations <- measurement %>% 
-  select(id_barcode, id_measurement, id_observation) %>% 
-  left_join(observation %>% select(id_observation)) %>% 
-  group_by(id_barcode, id_measurement) %>% 
-  count() %>% 
-  collect()
-toc()
-```
+## TODO - align measurement and observation tables
+
 ```{r}
 measurement_ids_m <- unique(summary_measurement$id_measurement)
 measurement_ids_o <- unique(summary_observations$id_measurement)
 print(setdiff(measurement_ids_m, measurement_ids_o))
 print(setdiff(measurement_ids_o, measurement_ids_m))
+```
+
+## Compare v3 and v3.downsampling
+
+```{r}
+tic()
+
+# 25421.122 sec 
+
+measurement.downsampling <- tbl(pool.v3.ds, "measurement")
+
+summary.measurement.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+
+observation.downsampling.areashape <- tbl(pool.v3.ds, "observation_areashape")
+  
+summary.observations.areashape.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation.downsampling.areashape %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+
+observation.downsampling.ch2 <- tbl(pool.v3.ds, "observation_ch2")
+
+summary.observations.ch2.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation.downsampling.ch2 %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+
+observation.downsampling.ch3 <- tbl(pool.v3.ds, "observation_ch3")
+
+summary.observations.ch3.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation.downsampling.ch3 %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+
+observation.downsampling.ch4 <- tbl(pool.v3.ds, "observation_ch4")
+
+summary.observations.ch4.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation.downsampling.ch4 %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+
+observation.downsampling.ch5 <- tbl(pool.v3.ds, "observation_ch5")
+
+summary.observations.ch5.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation.downsampling.ch5 %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+
+observation.downsampling.ch6 <- tbl(pool.v3.ds, "observation_ch6")
+
+summary.observations.ch6.downsampling <- measurement.downsampling %>% 
+  select(id_barcode, id_measurement, id_observation) %>% 
+  left_join(observation.downsampling.ch6 %>% select(id_observation)) %>% 
+  group_by(id_barcode, id_measurement) %>% 
+  count() %>% 
+  collect()
+
+toc()
+```
+```{r}
+tic()
+
+merged_summary_of_measurements <- summary_measurement %>% 
+  left_join(summary.measurement.downsampling, by=c("id_barcode", "id_measurement")) %>% 
+  mutate(match=n.x==n.y, ratio=n.y/n.x)
+
+merged_summary_of_observations_areashape <- summary_observations %>% 
+  left_join(summary.observations.areashape.downsampling, by=c("id_barcode", "id_measurement")) %>% 
+  mutate(match=n.x==n.y, ratio=n.y/n.x)
+
+merged_summary_of_observations_ch2 <- summary_observations %>% 
+  left_join(summary.observations.ch2.downsampling, by=c("id_barcode", "id_measurement")) %>% 
+  mutate(match=n.x==n.y, ratio=n.y/n.x)
+
+merged_summary_of_observations_ch3 <- summary_observations %>% 
+  left_join(summary.observations.ch3.downsampling, by=c("id_barcode", "id_measurement")) %>% 
+  mutate(match=n.x==n.y, ratio=n.y/n.x) 
+
+merged_summary_of_observations_ch4 <- summary_observations %>% 
+  left_join(summary.observations.ch4.downsampling, by=c("id_barcode", "id_measurement")) %>% 
+  mutate(match=n.x==n.y, ratio=n.y/n.x)
+
+merged_summary_of_observations_ch5 <- summary_observations %>% 
+  left_join(summary.observations.ch5.downsampling, by=c("id_barcode", "id_measurement")) %>% 
+  mutate(match=n.x==n.y, ratio=n.y/n.x) 
+
+merged_summary_of_observations_ch6 <- summary_observations %>% 
+  left_join(summary.observations.ch6.downsampling, by=c("id_barcode", "id_measurement")) %>% 
+  mutate(match=n.x==n.y, ratio=n.y/n.x) 
+
+toc()
+```
+```{r}
+merged_all <- merged_summary_of_measurements %>% select(id_measurement) %>% 
+  left_join(merged_summary_of_observations_areashape %>% select(id_measurement, ratio) %>% rename("areashape"="ratio")) %>% 
+  left_join(merged_summary_of_observations_ch2 %>% select(id_measurement, ratio) %>% rename("ch2"="ratio")) %>% 
+  left_join(merged_summary_of_observations_ch3 %>% select(id_measurement, ratio) %>% rename("ch3"="ratio")) %>% 
+  left_join(merged_summary_of_observations_ch4 %>% select(id_measurement, ratio) %>% rename("ch4"="ratio")) %>% 
+  left_join(merged_summary_of_observations_ch5 %>% select(id_measurement, ratio) %>% rename("ch5"="ratio")) %>% 
+  left_join(merged_summary_of_observations_ch6 %>% select(id_measurement, ratio) %>% rename("ch6"="ratio")) 
+
+numeric_columns <- c("areashape", "ch2", "ch3", "ch4", "ch5", "ch6")
+
+```
+```{r}
+
+sweep(merged_all[numeric_columns], 2, colSums(merged_all[numeric_columns]), FUN="/")
+m <- scale(merged_all[numeric_columns], center=FALSE, scale=colSums(merged_all[numeric_columns]))
+
+
+# library(reshape2)
+# 
+# mtcars.long <- melt(merged_all, id = "id_measurement", measure = numeric_columns)
+# 
+# ggplot(mtcars.long, aes(id_measurement, value, colour = variable)) + geom_line()
 ```
 
 ## Investigating features
@@ -983,11 +1104,19 @@ toc()
 cell.morphology.all <- m.ds %>% 
   merge(o.ds.a) %>% 
   merge(o.ds.ch2 %>% filter(downsampling=="resolution1") %>% select(-downsampling)) %>% 
-  merge(o.ds.ch3 %>% filter(downsampling=="mid24") %>% select(-downsampling)) #%>%
-  # merge(o.ds.ch4 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>% 
-  # merge(o.ds.ch5 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>% 
-  # merge(o.ds.ch6 %>% filter(downsampling=="mid24") %>% select(-downsampling))
+  merge(o.ds.ch3 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>%
+  merge(o.ds.ch4 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>%
+  merge(o.ds.ch5 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>% 
+  merge(o.ds.ch6 %>% filter(downsampling=="mid24") %>% select(-downsampling))
 
+
+cell.morphology.all.resolution2 <- m.ds %>% 
+  merge(o.ds.a) %>% 
+  merge(o.ds.ch2 %>% filter(downsampling=="resolution2") %>% select(-downsampling)) %>% 
+  merge(o.ds.ch3 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>%
+  merge(o.ds.ch4 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>%
+  merge(o.ds.ch5 %>% filter(downsampling=="mid24") %>% select(-downsampling)) %>% 
+  merge(o.ds.ch6 %>% filter(downsampling=="mid24") %>% select(-downsampling))
 
 ```
 
@@ -1064,7 +1193,7 @@ ggsave(paste0(barcode_id, "_ds_", t, "_object_count.pdf"), plot=g, path="~/mcsab
 ```{r eval=FALSE, include=FALSE}
 tic()
 
-measurement_id_to_truncate <- "000012118303__2023-06-02T13_16_13-Measurement_1"
+measurement_id_to_truncate <- "000012116403__2022-09-29T12_57_04-Measurement_4"
 
 # deleteQuery <- glue::glue_sql("DELETE FROM measurement WHERE id_measurement LIKE '%000012117203__2023-03-14T12_32_09-Measurement_2%'", .con=pool.v3.ds)
 # dbExecute(statement = deleteQuery, con=pool.v3.ds)
@@ -1084,18 +1213,18 @@ toc()
 # }
 
 tic()
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_areashape WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
-# dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch2 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
-# dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch3 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
-# dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch4 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
-# dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch5 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
-# dbExecute(statement = deleteQuery, con=pool.v3.ds)
-# deleteQuery <- glue::glue_sql("DELETE FROM observation_ch6 WHERE id_observation LIKE '%000012118303__2023-06-02T13_16_13-Measurement_1%'", .con=pool.v3.ds)
-# dbExecute(statement = deleteQuery, con=pool.v3.ds)
+deleteQuery <- glue::glue_sql("DELETE FROM observation_areashape WHERE id_observation LIKE '%000012116403__2022-09-29T12_57_04-Measurement_4%'", .con=pool.v3.ds)
+dbExecute(statement = deleteQuery, con=pool.v3.ds)
+deleteQuery <- glue::glue_sql("DELETE FROM observation_ch2 WHERE id_observation LIKE '%000012116403__2022-09-29T12_57_04-Measurement_4%'", .con=pool.v3.ds)
+dbExecute(statement = deleteQuery, con=pool.v3.ds)
+deleteQuery <- glue::glue_sql("DELETE FROM observation_ch3 WHERE id_observation LIKE '%000012116403__2022-09-29T12_57_04-Measurement_4%'", .con=pool.v3.ds)
+dbExecute(statement = deleteQuery, con=pool.v3.ds)
+deleteQuery <- glue::glue_sql("DELETE FROM observation_ch4 WHERE id_observation LIKE '%000012116403__2022-09-29T12_57_04-Measurement_4%'", .con=pool.v3.ds)
+dbExecute(statement = deleteQuery, con=pool.v3.ds)
+deleteQuery <- glue::glue_sql("DELETE FROM observation_ch5 WHERE id_observation LIKE '%000012116403__2022-09-29T12_57_04-Measurement_4%'", .con=pool.v3.ds)
+dbExecute(statement = deleteQuery, con=pool.v3.ds)
+deleteQuery <- glue::glue_sql("DELETE FROM observation_ch6 WHERE id_observation LIKE '%000012116403__2022-09-29T12_57_04-Measurement_4%'", .con=pool.v3.ds)
+dbExecute(statement = deleteQuery, con=pool.v3.ds)
 toc()
 ```
 
