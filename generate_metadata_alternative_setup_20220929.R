@@ -130,14 +130,14 @@ brightfield_planes = as.list(loaddata_output %>% filter(channel=="ch2") %>% .$zs
 fluorescent_planes = as.list(loaddata_output %>% filter(channel=="ch3") %>% .$zst %>% unique())
 
 brightfield_projection_subsets <- list(
-  resolution1 = brightfield_planes,
-  resolution2 = brightfield_planes[seq(1,length(brightfield_planes),by=2)]
+  resolution1 = brightfield_planes
+  # resolution2 = brightfield_planes[seq(1,length(brightfield_planes),by=2)]
 )
 
 fluorescent_projection_subsets <- list(
-  mid24 = fluorescent_planes,
-  mid2 = fluorescent_planes[1],
-  mid4 = fluorescent_planes[2]
+  mid24 = fluorescent_planes
+  # mid2 = fluorescent_planes[1],
+  # mid4 = fluorescent_planes[2]
 )
 
 #==================================================#
@@ -190,7 +190,7 @@ print("Generating job files with grouping")
 
 tic()
 for (i in 1:length(channel_ffc_v)){
-  print(paste0(i, ": Generating job files: ", channel_ffc_n))
+  print(paste0(i, ": Generating job files: ", channel_ffc_n[i]))
   link_json_metadata(metadata_split_path = list.files(new_path_base, pattern = "metadata_", full.names = TRUE) %>%
                        stringr::str_subset(pattern = ".csv") %>%
                        stringr::str_subset(pattern = channel_ffc_n[i]),

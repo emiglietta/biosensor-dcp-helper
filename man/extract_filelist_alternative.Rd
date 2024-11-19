@@ -15,6 +15,3 @@ a tibble with columns: file_name, n_zst, well, col, fld, zst, l_row, channel, fi
 \description{
 Return tibble describing each image file with well, field etc. in a given directory
 }
-\examples{
-
-}

@@ -165,7 +165,7 @@ new_measurement = tibble(id_barcode = measurement_id %>% str_extract(pattern = "
     separate(id_observation, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_no", "iteration_no", "well", "field", "channel")) %>% 
   select(-(t1:t3)) %>%
     mutate(measurement_no = str_extract(measurement_no, pattern = "\\d") %>% as.numeric(),
-           iteration_no = str_extract(iteration_no, pattern = "\\d") %>% as.numeric()) %>%
+           iteration_no = str_extract(iteration_no, pattern = "\\d+") %>% as.numeric()) %>%
     mutate(full_path = results_list) %>% rowwise() %>% 
     mutate(id_observation_checksum = compute_observations_checksum(full_path %>% as.character()) %>% as.character()) %>%
     anti_join(existing_measurement)

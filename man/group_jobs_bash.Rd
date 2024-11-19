@@ -23,9 +23,6 @@ group_jobs_bash(
 
 \item{pattern}{a string that has to be contained in the job files of interest}
 }
-\value{
-
-}
 \description{
 Creating a shell script that submits a whole collection of Jobs for job files that match a given pattern and well range
 }

@@ -15,9 +15,6 @@ generate_group(
 \arguments{
 \item{group_tag}{}
 }
-\value{
-
-}
 \description{
 Generate grouping function call
 }

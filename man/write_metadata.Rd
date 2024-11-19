@@ -15,9 +15,6 @@ write_metadata(
 \arguments{
 \item{name}{}
 }
-\value{
-
-}
 \description{
 Title
 }

@@ -18,9 +18,6 @@ create_flatfield_metadata_split(
 \arguments{
 \item{name}{}
 }
-\value{
-
-}
 \description{
 Title
 }

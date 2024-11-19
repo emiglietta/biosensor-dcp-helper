@@ -4,13 +4,13 @@
 #' @param path
 #' @param interactive
 #' @param interactive_path
-#' @param name
 #'
 #' @return
 #' @export
 #'
 #' @examples
-add_brightfield_proj <- function(file_f, p = "p16",
+add_brightfield_proj <- function(file_f,
+                                 p = "p16",
                                  flatfield_dir = "flatfield",
                                  brightfield_channel = "ch2",
                                  fk = "fk1fl1",

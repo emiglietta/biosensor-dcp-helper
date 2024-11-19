@@ -16,9 +16,6 @@ create_phase_metadata(
 \arguments{
 \item{name}{}
 }
-\value{
-
-}
 \description{
 Title
 }

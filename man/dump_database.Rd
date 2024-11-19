@@ -9,9 +9,6 @@ dump_database(x, name_of_table = "cells", con)
 \arguments{
 \item{measurment_of_interest}{}
 }
-\value{
-
-}
 \description{
 DEPRECATED Dump a dataframe into a database
 }

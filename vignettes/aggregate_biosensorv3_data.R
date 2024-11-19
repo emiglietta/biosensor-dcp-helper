@@ -21,7 +21,7 @@ tic("Preparing data")
 # measurement_id = "000012117203__2023-03-17T15_05_10-Measurement_5"
 measurement_id = args = commandArgs(trailingOnly=TRUE)
 
-bucket_dir = "s3://ascstore/flatfieldv2/"             # AWS S3 folder containing single-cell morphological measurements (or observations)
+bucket_dir = "s3://ascstore/flatfieldv2_test/"             # AWS S3 folder containing single-cell morphological measurements (or observations)
 results_dir = "/home/ubuntu/dcp_helper/data/results/" # temporary local folder to pull single cell data
 
 if ( dir.exists( file.path(results_dir,measurement_id) ) ) {
@@ -32,7 +32,9 @@ if ( dir.exists( file.path(results_dir,measurement_id) ) ) {
   system( paste('aws s3 sync',
                 paste0(bucket_dir, measurement_id),
                 paste0(results_dir, measurement_id),
-                '--exclude "*" --include "*.csv" --force-glacier-transfer --no-progress') )
+                '--exclude "*" --include "*mid24*.csv" --include "*resolution1*.csv" --force-glacier-transfer --no-progress'
+                # '--exclude "*" --include "*.csv" --force-glacier-transfer --no-progress'
+                ) )
 }
 toc()
 
@@ -152,7 +154,7 @@ new_measurement = tibble(id_barcode = measurement_id %>% str_extract(pattern = "
     separate(id_observation, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_no", "iteration_no", "well", "field", "channel")) %>%
   select(-(t1:t3)) %>%
     mutate(measurement_no = str_extract(measurement_no, pattern = "\\d") %>% as.numeric(),
-           iteration_no = str_extract(iteration_no, pattern = "\\d") %>% as.numeric()) %>%
+           iteration_no = str_extract(iteration_no, pattern = "\\d+") %>% as.numeric()) %>%
     mutate(full_path = results_list) %>% rowwise() %>%
     mutate(id_observation_checksum = compute_observations_checksum(full_path %>% as.character()) %>% as.character()) %>%
     anti_join(existing_measurement)

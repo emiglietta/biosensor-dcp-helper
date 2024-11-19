@@ -8,15 +8,12 @@ group_metadata_bash(
   metadata_split_path,
   path_base,
   python_function = "python ~/dcp_helper/python/ManualMetadata_dir.py ",
- 
-    metadata_grouping = "['Metadata_parent','Metadata_timepoint', 'Metadata_well', 'Metadata_fld', 'Metadata_channel']"
+  metadata_grouping =
+    "['Metadata_parent','Metadata_timepoint', 'Metadata_well', 'Metadata_fld', 'Metadata_channel']"
 )
 }
 \arguments{
 \item{metadata_split_path}{}
-}
-\value{
-
 }
 \description{
 LEGACY: Creating a shell script that used the Distributed Cell Profiler script ManualMetadata.py to create groupings

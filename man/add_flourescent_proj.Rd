@@ -14,9 +14,6 @@ add_flourescent_proj(
 \arguments{
 \item{name}{}
 }
-\value{
-
-}
 \description{
 Add details for a feature extraction of multi-channel_n images to metadata
 }

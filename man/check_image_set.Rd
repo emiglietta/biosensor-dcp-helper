@@ -9,9 +9,6 @@ check_image_set(path = getwd(), well_no = 384, z = 16, expected = c(1))
 \arguments{
 \item{expected}{}
 }
-\value{
-
-}
 \description{
 Title
 }

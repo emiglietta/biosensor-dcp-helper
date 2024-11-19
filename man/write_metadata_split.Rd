@@ -9,9 +9,6 @@ write_metadata_split(df, name = "segmentation", path_base)
 \arguments{
 \item{path_base}{}
 }
-\value{
-
-}
 \description{
 Title
 }

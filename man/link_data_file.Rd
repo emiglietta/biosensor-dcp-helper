@@ -14,14 +14,13 @@ link_data_file(
 )
 }
 \arguments{
+\item{metadata_split_path}{Table that contains metadata and file information for CellProfiler pipeline using LoadData module}
+
 \item{path_base}{Destination directory of job files}
 
 \item{flatfield_dir}{Directory for intemediate and final results}
 
 \item{path_to_metadata}{Directory containing metadata files}
-}
-\value{
-
 }
 \description{
 Fill a JSON template with a specific metadata path and metadata groupings

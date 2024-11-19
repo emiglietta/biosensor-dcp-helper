@@ -14,9 +14,6 @@ collect_feature_data(
 \arguments{
 \item{measurment_of_interest}{}
 }
-\value{
-
-}
 \description{
 Collect Feature data after image analysis with cellprofiler
 }
