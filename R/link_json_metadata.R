@@ -16,7 +16,7 @@ link_json_metadata <- function(json_path,
                                metadata_split_path,
                                path_base,
                                flatfield_dir = "flatfield",
-                               path_to_metadata = "dcp_helper/metadata/"){
+                               path_to_metadata = "dcp_helper/metadata"){
   #loading json file
   json <- jsonlite::read_json(path = json_path)
 

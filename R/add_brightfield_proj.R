@@ -2,8 +2,6 @@
 #'
 #' @param df
 #' @param path
-#' @param interactive
-#' @param interactive_path
 #'
 #' @return
 #' @export

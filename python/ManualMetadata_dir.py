@@ -1,6 +1,6 @@
 ''' A script to create a list of all the metadata combinations present in a given CSV
 This is designed to be called from the command line with
-$ python ManualMetadata.py pathtocsv/csvfile.csv "['Metadata_Metadata1','Metadata_Metadata2']"
+$ python ManualMetadata_dir.py pathtocsv/csvfile.csv "['Metadata_Metadata1','Metadata_Metadata2']"
 '''
 from __future__ import print_function
 

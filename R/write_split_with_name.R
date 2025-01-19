@@ -11,7 +11,7 @@
 write_split_with_name <- function(df, parent, name, path_base){
   well <- df$Metadata_well %>% unique()
 
-  metadata_split_path <- paste0(path_base, "metadata_", parent, "_", name, "_", well, ".csv")
+  metadata_split_path <- file.path(path_base, paste0("metadata_", parent, "_", name, "_", well, ".csv") )
 
   write.csv(df, metadata_split_path, row.names=FALSE)
   print(paste0("created ", metadata_split_path))

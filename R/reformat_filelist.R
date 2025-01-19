@@ -25,8 +25,7 @@ reformat_filelist <- function(df){
     mutate(Metadata_zst = paste0("p", Metadata_zst)) %>%
     #change the path name
     group_by(Image_FileName_brightfield) %>%
-    mutate(Image_PathName_brightfield = Image_PathName_brightfield %>%
-             str_split(pattern = "/") %>% unlist() %>% .[1:length(.)-1] %>% str_flatten(collapse = "/")) %>%
+    mutate(Image_PathName_brightfield = Image_PathName_brightfield) %>%
     #add the file extension back
     ungroup() %>%
     mutate(Image_FileName_brightfield = paste0(Image_FileName_brightfield, ".", ext)) %>%

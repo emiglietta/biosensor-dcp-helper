@@ -21,18 +21,22 @@ print(paste0("Processing plate ", plate_name))
 
 ################ Define paths
 
-flatfield_dir = "flatfieldv2"
-metadata_dir = "dcp_helper/metadatav2/"
+bucket_mount_dir = "/home/ubuntu/bucket"
 
-new_path_base = paste0("~/", metadata_dir, plate_name,"/") #relative path acceptable
-inbox_path_base= paste0("/home/ubuntu/bucket/inbox_test_mit/", plate_name,"/Images/") #absolute path with /home/ubuntu/ required
-#flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name,"_subsampling/") #deprecated: only used for result collection
-flatfield_path_base= paste0("~/bucket/", flatfield_dir, "/", plate_name)
+inbox_dir = "inbox_mit"
+flatfield_dir = "flatfieldv2_test"
+metadata_dir = "dcp_helper/metadatav2_test"
 
-#path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_999999990000.yml"
-path_yml = "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config_000012116403_20220926.yml" # should match with Index.idx.xml metadata
+new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #relative path acceptable
+inbox_path_base= normalizePath(paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/")) #absolute path with /home/ubuntu/ required
+flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
 
-# tail -1000 Index.idx.xml | grep ChannelName | sort -u
+dcp_helper_config_dir = "~/mcsaba/biosensor/src/dcp_helper/python"
+
+path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012116403_20220926.yml") # should match with Index.idx.xml metadata
+
+# To list unique channel names you can run the following command
+# `tail -1000 Index.idx.xml | grep ChannelName | sort -u`
 
 ################ Creating target dir
 
@@ -43,30 +47,29 @@ lapply(new_path_base, dir.create, recursive=TRUE) # Do not execute this from a l
 # All json templates are available in fork csmolnar/dcp_helper
 
 # READY
-new_json_path_brightfield_flatfield = "~/dcp_helper/python/job_brightfield_flatfield_template.json" #brightfield FFC
-new_json_path_fluorescent_flatfield = "~/dcp_helper/python/job_fluorescent_flatfield_template.json" #fluorescent FFC
+new_json_path_brightfield_flatfield =  file.path(dcp_helper_config_dir,"job_brightfield_flatfield_template.json") #brightfield FFC
+new_json_path_fluorescent_flatfield =  file.path(dcp_helper_config_dir,"job_fluorescent_flatfield_template.json") #fluorescent FFC
 
 # TO REPRODUCE
-new_json_path_brightfield_projection = "~/dcp_helper/python/job_brightfield_projection_template.json" #fluorescent projection
-# new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_template.json" #fluorescent projection, all planes
-new_json_path_fluorescent_projection = "~/dcp_helper/python/job_fluorescent_projection_downsampling_template.json" #fluorescent projection, downsampling
+new_json_path_brightfield_projection =  file.path(dcp_helper_config_dir, "job_brightfield_projection_template.json") #fluorescent projection
+new_json_path_fluorescent_projection =  file.path(dcp_helper_config_dir, "job_fluorescent_projection_downsampling_template.json") #fluorescent projection, downsampling
 
 # READY
 new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json"
 
 # TO REPRODUCE
-new_json_path_featureextraction_ch2 = "~/dcp_helper/python/job_featureextraction_ch2_template.json"
-new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_template.json"
-new_json_path_featureextraction_ch3_ch4 = "~/dcp_helper/python/job_featureextraction_ch3_ch4_downsampled_template.json"
-new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_template.json"
-new_json_path_featureextraction_ch5_ch6 = "~/dcp_helper/python/job_featureextraction_ch5_ch6_downsampled_template.json"
+new_json_path_featureextraction_ch2 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch2_template.json")
+# new_json_path_featureextraction_ch3_ch4 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch3_ch4_template.json")
+new_json_path_featureextraction_ch3_ch4 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch3_ch4_downsampled_template.json")
+# new_json_path_featureextraction_ch5_ch6 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch5_ch6_template.json")
+new_json_path_featureextraction_ch5_ch6 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch5_ch6_downsampled_template.json")
 
 python_call_submitjob = "python ~/DCP2.0/run.py submitJob "
 # python_call_submitjob = "python ~/Distributed-CellProfiler/run.py submitJob "
 
 ################ This is where the execution starts
 
-fileConn <- file(paste0(new_path_base, "metadata_generation_", plate_name,".log"))
+fileConn <- file(file.path(new_path_base, paste0("metadata_generation_", plate_name,".log")))
 start.time <- Sys.time()
 # writeLines(c("Start time: ", start.time), fileConn)
 
@@ -96,9 +99,9 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",timepoint+1)) %>%
    rename(abstime = Metadata_AbsTime) %>%
    rename(ext = type) %>%
-   mutate(name = paste0(Image_PathName, file_name)) %>%
+   mutate(name = file.path(Image_PathName, file_name)) %>%
    select(-contains("Metadata_")) %>%
-   mutate(parent = inbox_path_base %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-2])
+   mutate(parent = inbox_path_base %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-1])
 
 loaddata.finish.time <- Sys.time()
 # writeLines(c("Loaddata finished:", loaddata.finish.time), fileConn)
@@ -816,7 +819,7 @@ for(i in 1:length(channel_measurement_n)){
 }
 toc()
 
-phase1bash.file.conn <- file(paste0(new_path_base, "submit_phase1.sh"))
+phase1bash.file.conn <- file(file.path(new_path_base, "submit_phase1.sh"))
 writeLines(c("#!/bin/sh", "",
              "./quick_group_jobs_bash_segmentation_ch1_.sh",
              "./quick_group_jobs_bash_ffc_brightfield_.sh",
@@ -826,9 +829,9 @@ writeLines(c("#!/bin/sh", "",
              "./quick_group_jobs_bash_ffc_ch6_.sh"),
            con=phase1bash.file.conn)
 close(phase1bash.file.conn)
-system(paste0("sudo chmod +x ", "submit_phase1.sh"))
+system(paste0("sudo chmod +x ", file.path(new_path_base, "submit_phase1.sh")))
 
-phase2bash.file.conn <- file(paste0(new_path_base, "submit_phase2.sh"))
+phase2bash.file.conn <- file(file.path(new_path_base, "submit_phase2.sh"))
 writeLines(c("#!/bin/sh", "",
              "./quick_group_jobs_bash_projection_ch2_.sh",
              "./quick_group_jobs_bash_maximumprojection_ch3_.sh",
@@ -837,16 +840,16 @@ writeLines(c("#!/bin/sh", "",
              "./quick_group_jobs_bash_maximumprojection_ch6_.sh"),
            con=phase2bash.file.conn)
 close(phase2bash.file.conn)
-system(paste0("sudo chmod +x ", "submit_phase2.sh"))
+system(paste0("sudo chmod +x ", file.path(new_path_base, "submit_phase2.sh")))
 
-phase3bash.file.conn <- file(paste0(new_path_base, "submit_phase3.sh"))
+phase3bash.file.conn <- file(file.path(new_path_base, "submit_phase3.sh"))
 writeLines(c("#!/bin/sh", "",
              "./quick_group_jobs_bash_measurement_ch2_.sh",
              "./quick_group_jobs_bash_measurement_ch3_ch4_.sh",
              "./quick_group_jobs_bash_measurement_ch5_ch6_.sh"),
            con=phase3bash.file.conn)
 close(phase3bash.file.conn)
-system(paste0("sudo chmod +x ", paste("submit_phase3.sh")))
+system(paste0("sudo chmod +x ", file.path(new_path_base, "submit_phase3.sh")))
 
 measurement.finish.time <- Sys.time()
 # writeLines(c("Measurement finished:", measurement.finish.time), fileConn)
