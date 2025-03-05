@@ -1,0 +1,32 @@
+channels:
+    Alexa 488 2: Ch3_2
+    Alexa 488 4: Ch3_4
+    Alexa 488 6: Ch3_6
+    Alexa 568 2: Ch4_2
+    Alexa 568 4: Ch4_4
+    Alexa 568 6: Ch4_6
+    Alexa 647 2: Ch5_2
+    Alexa 647 4: Ch5_4
+    Alexa 647 6: Ch5_6
+    Pacific Blue 2: Ch6_2
+    Pacific Blue 4: Ch6_4
+    Pacific Blue 6: Ch6_6
+    Brightfield 0: Brightfield_0
+    Brightfield 1: Brightfield_1
+    Brightfield 2: Brightfield_2
+    Brightfield 3: Brightfield_3
+    Brightfield 4: Brightfield_4
+    Brightfield 5: Brightfield_5
+    Brightfield 6: Brightfield_6
+    Brightfield 7: Brightfield_7
+    Brightfield 8: Brightfield_8
+    Digital Phase Contrast nr: PhaseContrast_0
+metadata:
+    Row: Row
+    Col: Col
+    FieldID: FieldID
+    PlaneID: PlaneID
+    ChannelID: ChannelID
+    ChannelName: ChannelName
+    TimepointID: TimepointID
+    AbsTime: AbsTime

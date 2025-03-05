@@ -15,7 +15,7 @@ add_brightfield_proj(
 )
 }
 \arguments{
-\item{name}{}
+\item{path}{}
 }
 \description{
 Add details for a brightfield projection to the metadata object

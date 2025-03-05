@@ -10,7 +10,7 @@ link_data_file(
   json_path,
   path_base,
   flatfield_dir = "flatfield",
-  path_to_metadata = "dcp_helper/metadata/"
+  path_to_metadata = "dcp_helper/metadata"
 )
 }
 \arguments{

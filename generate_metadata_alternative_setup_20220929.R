@@ -5,12 +5,8 @@
 ## Call this script with: Rscript generate_metadata_alternative_setup_20220929.R <measurement_id>
 
 library(tidyverse)
-library(dcphelper)
+library(biosensordcphelper)
 library(tictoc)
-
-format_output_structure <- function(metadata_tags){
-  paste0(metadata_tags, collapse = "-")
-}
 
 plate_name = args = commandArgs(trailingOnly=TRUE)
 
@@ -24,14 +20,14 @@ print(paste0("Processing plate ", plate_name))
 bucket_mount_dir = "/home/ubuntu/bucket"
 
 inbox_dir = "inbox_mit"
-flatfield_dir = "flatfieldv2_test"
-metadata_dir = "dcp_helper/metadatav2_test"
+flatfield_dir = "flatfieldv2_test_new_instance"
+metadata_dir = "dcp_helper/metadatav2_test_new_instance_refactoring"
 
 new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #relative path acceptable
 inbox_path_base= normalizePath(paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/")) #absolute path with /home/ubuntu/ required
 flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
 
-dcp_helper_config_dir = "~/mcsaba/biosensor/src/dcp_helper/python"
+dcp_helper_config_dir = "~/projects/biosensor/src/biosensor-dcp-helper/python"
 
 path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012116403_20220926.yml") # should match with Index.idx.xml metadata
 
@@ -55,7 +51,7 @@ new_json_path_brightfield_projection =  file.path(dcp_helper_config_dir, "job_br
 new_json_path_fluorescent_projection =  file.path(dcp_helper_config_dir, "job_fluorescent_projection_downsampling_template.json") #fluorescent projection, downsampling
 
 # READY
-new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json"
+new_json_path_segmentation = file.path(dcp_helper_config_dir, "job_segmentation_template.json")
 
 # TO REPRODUCE
 new_json_path_featureextraction_ch2 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch2_template.json")
@@ -64,7 +60,7 @@ new_json_path_featureextraction_ch3_ch4 =  file.path(dcp_helper_config_dir, "job
 # new_json_path_featureextraction_ch5_ch6 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch5_ch6_template.json")
 new_json_path_featureextraction_ch5_ch6 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch5_ch6_downsampled_template.json")
 
-python_call_submitjob = "python ~/DCP2.0/run.py submitJob "
+python_call_submitjob = "python3 ~/projects/biosensor/src/DCP2.0/run.py submitJob "
 # python_call_submitjob = "python ~/Distributed-CellProfiler/run.py submitJob "
 
 ################ This is where the execution starts
@@ -144,7 +140,7 @@ fluorescent_projection_subsets <- list(
 )
 
 #==================================================#
-#         PHASE 1: flatfield correction            # # DONE #
+#         PHASE 1: flatfield correction            #
 #==================================================#
 
 # if (FALSE){

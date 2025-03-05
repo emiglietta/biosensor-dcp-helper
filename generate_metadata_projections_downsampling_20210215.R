@@ -8,10 +8,6 @@ library(tidyverse)
 library(dcphelper)
 library(tictoc)
 
-format_output_structure <- function(metadata_tags){
-  paste0(metadata_tags, collapse = "-")
-}
-
 plate_name = args = commandArgs(trailingOnly=TRUE)
 # for debugging only
 #plate_name = "000012095203__2019-12-09T17_58_26-Measurement_1"

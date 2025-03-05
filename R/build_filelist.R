@@ -15,7 +15,7 @@
 build_filelist <- function(path, force, path_base, path_yml="~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata_config.yml"){
   # path mus be with trailing backslash
 
-  # parent <- path %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-1]
+  # parent <- path %>% str_split(pattern = "/") %>% unlist() %>% .[length(.)-1]
 
   if (file.exists(file.path(path_base, "loaddata_output.csv")) & force == FALSE){
     print("Found file list")
@@ -24,7 +24,7 @@ build_filelist <- function(path, force, path_base, path_yml="~/mcsaba/biosensor/
     print("Initiating file list")
 
     system(paste("python2",
-                 "~/mcsaba/biosensor/src/dcp_helper/python/pe2loaddata.py",
+                 "~/projects/biosensor/src/biosensor-dcp-helper/python/pe2loaddata.py",
                  paste0("--index-directory=", path),
                  path_yml,
                  file.path(path_base, "loaddata_output.csv") ) )

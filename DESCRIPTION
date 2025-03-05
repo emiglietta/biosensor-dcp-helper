@@ -1,4 +1,4 @@
-Package: dcphelper
+Package: biosensordcphelper
 Title: Create metadata and job files for distributed cell profiler 
 Version: 0.9.11.2024
 Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
@@ -17,7 +17,8 @@ Imports:
   readr,
   janitor,
   jsonlite,
-  reticulate
+  reticulate,
+  here
 RoxygenNote: 7.3.2
 Suggests: knitr,
     rmarkdown

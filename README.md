@@ -1,2 +1,2 @@
-# dcp_helper
-Distributed Cell Profiler Helper Functions
+# biosensor-dcp-helper
+Distributed CellProfiler Helper Functions
