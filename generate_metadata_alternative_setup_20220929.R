@@ -18,6 +18,7 @@ print(paste0("Processing plate ", plate_name))
 ################ Define paths
 
 bucket_mount_dir = "/home/ubuntu/bucket"
+<<<<<<< Updated upstream
 
 inbox_dir = "inbox_mit"
 flatfield_dir = "flatfieldv2_test_new_instance"
@@ -31,6 +32,22 @@ dcp_helper_config_dir = "~/projects/biosensor/src/biosensor-dcp-helper/python"
 
 path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012116403_20220926.yml") # should match with Index.idx.xml metadata
 
+=======
+
+inbox_dir = "inbox_mit"
+flatfield_dir = "flatfield/Batch_000012128303"
+metadata_dir = "dcp_helper_csaba/metadata/Batch_000012128303"
+
+new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #relative path acceptable
+inbox_path_base= normalizePath(paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/")) #absolute path with /home/ubuntu/ required
+flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
+
+dcp_helper_config_dir = "~/dcp_helper_csaba/python"
+
+path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012128303.yml") # should match with Index.idx.xml metadata
+
+
+>>>>>>> Stashed changes
 # To list unique channel names you can run the following command
 # `tail -1000 Index.idx.xml | grep ChannelName | sort -u`
 
@@ -74,6 +91,10 @@ start.time <- Sys.time()
 #==================================================#
 
 # loaddata_output = extract_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml )
+print(paste("path= ", inbox_path_base))
+print(paste("new_path_base= ", new_path_base))
+print(paste("path_yml= ", path_yml))
+
 loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml ) %>%
    separate(Metadata_ChannelCPName, c("Metadata_ChannelCPName", "Metadata_PlaneID"), '_') %>%
    transform(., Metadata_PlaneID = as.numeric(Metadata_PlaneID)) %>%
@@ -92,7 +113,7 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    rename(row = Metadata_Row, col = Metadata_Col, fld = Metadata_FieldID, n_zst = Metadata_PlaneID, well = Metadata_Well) %>%
    mutate(zst = sprintf("%02d", n_zst+2)) %>%
    mutate(fld = sprintf("%02d", fld)) %>%
-   rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",timepoint+1)) %>%
+   rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",as.numeric(timepoint)+1)) %>%
    rename(abstime = Metadata_AbsTime) %>%
    rename(ext = type) %>%
    mutate(name = file.path(Image_PathName, file_name)) %>%
