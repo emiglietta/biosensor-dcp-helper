@@ -26,8 +26,13 @@ generate_group <- function(plate_name, channel_n, path_base, group_tag="all", gr
   # creating bash script
   c("#!/bin/sh",
     'pip install --user pandas', #ugly way of managing the dependency of the CellProfiler function
+<<<<<<< Updated upstream
     paste("python2",
       here::here("python","ManualMetadata_dir.py"),
+=======
+    paste("python",
+      "~/dcp_helper/python/ManualMetadata_dir.py",
+>>>>>>> Stashed changes
       path_base,
       read_lines(group_template_file),
       df$channel_n)

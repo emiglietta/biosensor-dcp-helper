@@ -15,7 +15,11 @@ add_brightfield_proj(
 )
 }
 \arguments{
+<<<<<<< Updated upstream
 \item{path}{}
+=======
+\item{name}{}
+>>>>>>> Stashed changes
 }
 \description{
 Add details for a brightfield projection to the metadata object

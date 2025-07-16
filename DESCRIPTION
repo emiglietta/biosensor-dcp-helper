@@ -17,8 +17,12 @@ Imports:
   readr,
   janitor,
   jsonlite,
+<<<<<<< Updated upstream
   reticulate,
   here
+=======
+  reticulate
+>>>>>>> Stashed changes
 RoxygenNote: 7.3.2
 Suggests: knitr,
     rmarkdown

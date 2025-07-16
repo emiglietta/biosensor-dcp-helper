@@ -257,8 +257,12 @@ def main():
         IPython.embed()
 
     if not options.index_file:
-        options.index_file = os.path.join(options.index_directory,
+        try:
+            options.index_file = os.path.join(options.index_directory,
                                           "Index.idx.xml")
+        except:
+            options.index_file = os.path.join(options.index_directory,
+                                          "Index.xml")
     doc = DocContentHandler()
     xml.sax.parse(options.index_file, doc)
     images = doc.root.images.images
