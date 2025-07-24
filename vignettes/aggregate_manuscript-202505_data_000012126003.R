@@ -20,6 +20,7 @@ tic("Preparing data")
 
 # session_id is the name of the specific 'reading' of the plate, i.e. "000012126003__2025-01-16T14_31_24-Measurement_1"
 session_id = args = commandArgs(trailingOnly=TRUE) # takes the value from the arguments when calling the function from CLI
+# session_id = 000012126003__2025-01-16T14_31_24-Measurement_1
 
 bucket_dir = "s3://ascstore/flatfieldv2_test/"             # AWS S3 folder containing single-cell morphological measurements (or observations)
 results_dir = "/home/ubuntu/dcp_helper_csaba/data/results" # temporary local folder to pull single cell data
@@ -150,6 +151,7 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
          ) %>%
     separate(measurement_id, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_descriptor", "timepoint_descriptor", "well", "field_descriptor", "channel")) %>%
   select(-(t1:t3)) %>% # drop t1, t2, t3
+  select(-(channel)) %>% # drop channel
     mutate(measurement_descriptor = str_extract(measurement_descriptor, pattern = "\\d") %>% as.numeric(),
            timepoint_descriptor = str_extract(timepoint_descriptor, pattern = "\\d+") %>% as.numeric()) %>%
     mutate(full_path = results_list) %>% rowwise() %>%
