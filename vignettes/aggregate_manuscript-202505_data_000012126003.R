@@ -157,7 +157,7 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
     mutate(local_path = results_list) %>% 
     rowwise() %>%
     mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
-    mutate(staining_layout_id = "placeholder") %>%
+    mutate(staining_layout_id = 0000) %>%
     anti_join(existing_measurement)
 toc()
 ## OK up to here!
