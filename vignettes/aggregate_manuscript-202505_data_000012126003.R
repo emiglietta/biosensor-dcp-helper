@@ -150,12 +150,14 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
          measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
          ) %>%
     separate(measurement_id, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_descriptor", "timepoint_descriptor", "well", "field_descriptor", "channel")) %>%
-  select(-(t1:t3)) %>% # drop t1, t2, t3
-  select(-(channel)) %>% # drop channel
+    select(-(t1:t3)) %>% # drop t1, t2, t3
+    select(-(channel)) %>% # drop channel
     mutate(measurement_descriptor = str_extract(measurement_descriptor, pattern = "\\d") %>% as.numeric(),
            timepoint_descriptor = str_extract(timepoint_descriptor, pattern = "\\d+") %>% as.numeric()) %>%
-    mutate(local_path = results_list) %>% rowwise() %>%
+    mutate(local_path = results_list) %>% 
+    rowwise() %>%
     mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
+    mutate(staining_layout_id = "placeholder")
     anti_join(existing_measurement)
 toc()
 ## OK up to here!
