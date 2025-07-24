@@ -154,8 +154,8 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
   select(-(channel)) %>% # drop channel
     mutate(measurement_descriptor = str_extract(measurement_descriptor, pattern = "\\d") %>% as.numeric(),
            timepoint_descriptor = str_extract(timepoint_descriptor, pattern = "\\d+") %>% as.numeric()) %>%
-    mutate(full_path = results_list) %>% rowwise() %>%
-    mutate(measurement_checksum = compute_measurement_checksum(full_path %>% as.character()) %>% as.character()) %>%
+    mutate(local_path = results_list) %>% rowwise() %>%
+    mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
     anti_join(existing_measurement)
 toc()
 ## OK up to here!
@@ -178,8 +178,8 @@ tic("Adding new observations to database")
 ## -------------------------------------------------
 
 furrr::future_map2(new_measurement$measurement_id,
-                   new_measurement$full_path,
-                     ~ { read_and_merge_measurements(.y) %>% # .y is the second argument, i.e. 'new_measurement$full_path'
+                   new_measurement$local_path,
+                     ~ { read_and_merge_measurements(.y) %>% # .y is the second argument, i.e. 'new_measurement$local_path'
                            mutate(measurement_id = .x) %>% # .x is the first argument, i.e. 'new_measurement$measurement_id'
                            #separate(observation, c("id_observation", "id_observation_checksum"), sep = "___" ) %>%. #these columns are no logner used in the current version of the DB
                            dbWriteTable(pool.manuscript202505, "observation", ., append = TRUE)
