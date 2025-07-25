@@ -26,7 +26,7 @@ staining_layout_version = arges[3] #3rd argument, version of the staining layout
 
 # session_id = 000012126003__2025-01-16T14_31_24-Measurement_1
 # yml_path = "dcp_helper_csaba/vignettes/staining_layouts.yml"
-# staining_layout = "v2"
+# staining_layout_version = "v2"
 
 # Validate YAML file exists
 if (!file.exists(yml_path)) {
@@ -225,7 +225,7 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
     mutate(local_path = results_list) %>% 
     rowwise() %>%
     mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
-    mutate(staining_layout_id = 1203) %>%. ## THIS IS A PLACEHOLDER! <===============================================================
+    mutate(staining_layout_id = 1203) %>% ## THIS IS A PLACEHOLDER! (1203 is the last entry in the table when I wrote to it) <===============================================================
     anti_join(existing_measurement)
 toc()
 
