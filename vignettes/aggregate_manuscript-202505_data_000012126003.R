@@ -13,18 +13,33 @@ library(DBI)
 library(RPostgres)
 library(digest)
 library(furrr)
+library(yaml)
 
-
-
-tic("Preparing data")
+if (length(args) < 3) {
+  stop("Usage: Rscript aggregate_data.R <session_id> <yml_path> <staining_layout_version>", call. = FALSE)
+}
 
 # session_id is the name of the specific 'reading' of the plate, i.e. "000012126003__2025-01-16T14_31_24-Measurement_1"
-session_id = args = commandArgs(trailingOnly=TRUE) # takes the value from the arguments when calling the function from CLI
+session_id = args[1] # takes the value from the first argument when calling the function from CLI
+yml_path = args[2] # 2nd argument, path to the yaml file containing the different options for the staining layout
+staining_layout_version = arges[3] #3rd argument, version of the staining layout
+
 # session_id = 000012126003__2025-01-16T14_31_24-Measurement_1
+# yml_path = "dcp_helper_csaba/vignettes/staining_layouts.yml"
+# staining_layout = "v2"
+
+# Validate YAML file exists
+if (!file.exists(yml_path)) {
+  stop(paste("Error: YAML file not found at:", yml_path), call. = FALSE)
+}
 
 bucket_dir = "s3://ascstore/flatfieldv2_test/"             # AWS S3 folder containing single-cell morphological measurements (or observations)
 results_dir = "/home/ubuntu/dcp_helper_csaba/data/results" # temporary local folder to pull single cell data
 
+print(paste("Location of files in bucket: ", file.path(bucket_dir,session_id)))
+print(paste("Location of files locally: ", file.path(results_dir,session_id)))
+
+tic("Preparing data")
 # Temporarily download analysis files locally for proecessing 
 # TODO: is this really needed?
 if ( dir.exists( file.path(results_dir,session_id) ) ) {
@@ -93,11 +108,48 @@ read_and_merge_measurements <- function(result_path, pattern = "*Cells.csv"){
   }
 }
 
-# test functions
-# observation.checksum <- compute_measurement_checksum(results_list[1])
-# reduced.observation <- read_and_merge_measurements(results_list[1])
-
-
+get_validated_channels <- function(yml_path, staining_layout_version) {
+  # Read and parse YAML file
+  yaml_data <- yaml.load_file(yml_path)
+  
+  # Convert to proper list structure if it's an atomic vector
+  if (is.atomic(yaml_data)) {
+    yaml_data <- list(yaml_data)
+  }
+  
+  # Find the requested staining_layout_version
+  layout <- NULL
+  for (item in yaml_data) {
+    if (is.list(item) && !is.null(item$staining_layout) && item$staining_layout == staining_layout_version) {
+      layout <- item
+      break
+    }
+  }
+  
+  if (is.null(layout)) {
+    stop(paste("Staining layout version", staining_layout_version, "not found in YAML"), call. = FALSE)
+  }
+  
+  # Required channels
+  required_channels <- paste0("ch", 1:6)
+  
+  # Validate all channels exist and are non-null
+  for (ch in required_channels) {
+    if (!ch %in% names(layout) || is.null(layout[[ch]])) {
+      stop(paste("Missing or NULL value for required channel:", ch), call. = FALSE)
+    }
+  }
+  
+  # Return as tibble
+  tibble(
+    ch1 = layout$ch1,
+    ch2 = layout$ch2,
+    ch3 = layout$ch3,
+    ch4 = layout$ch4,
+    ch5 = layout$ch5,
+    ch6 = layout$ch6
+  )
+}
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
 
 # Establish connection to the RDS database using temporary token
@@ -130,6 +182,23 @@ pool.manuscript202505 <- pool::dbPool(RPostgres::Postgres(),
                        user = RDS_USER,
                        password = RDS_TOKEN)
 
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+
+# Append new imaging session to the session table 
+tic("Adding new session to database")
+new_session <- tibble(session_id = session_id)
+
+new_session %>%
+    dbWriteTable(pool.manuscript202505, "session", ., append = TRUE)
+toc()
+
+# Append new sample to the sample table 
+tic("Adding new sample to database")
+new_sample <- tibble(sample_id = session_id %>% str_extract(pattern = "0000\\d+"))
+
+new_sample %>%
+    dbWriteTable(pool.manuscript202505, "sample", ., append = TRUE)
+toc()
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
 # results_dir is a list of absolute paths to the main results folder for each well (the one ending in "ch1")
@@ -137,7 +206,6 @@ pool.manuscript202505 <- pool::dbPool(RPostgres::Postgres(),
 results_list <- dir(file.path(results_dir, session_id), pattern = "ch1", full.names = TRUE)
 
 tic("Creating records for new measurements")
-
 # measurement is the existing Measurement table within the RDS DB
 measurement <- tbl(pool.manuscript202505, "measurement")
 
@@ -157,10 +225,35 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
     mutate(local_path = results_list) %>% 
     rowwise() %>%
     mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
-    mutate(staining_layout_id = 0000) %>%
+    mutate(staining_layout_id = 1203) %>%. ## THIS IS A PLACEHOLDER! <===============================================================
     anti_join(existing_measurement)
 toc()
-## OK up to here!
+
+# Extract channel list from the yml file, based on the version indicated whren calling this script
+# TODO: CURRENT VERSION ASSUMES ONE STAINING LAYOUT PER PLATE (SESSION_ID), IT MIGHT NOT BE THIS WAY IN THE FUTURE!
+staining_layout_channels <- staining_layout_channels <- get_validated_channels(yml_path, staining_layout_version = staining_layout_version)
+
+new_staining_layout <- new_measurement %>%
+  mutate(row = match(str_extract(well, "[A-Z]"), LETTERS),   # Convert row letter to number (A=1, B=2, ..., Z=26)
+    col = as.numeric(str_extract(well, "\\d+"))) %>%         # Column is just the numeric part
+  select(well,row,col) %>%
+  mutate(
+    staining_layout = staining_layout_version,
+    #staining_layout_id = 0000, #DON'T ACTUALLY KNOW HOW TO FILL THIS!
+    ch1 = staining_layout_channels$ch1,
+    ch2 = staining_layout_channels$ch2,
+    ch3 = staining_layout_channels$ch3,
+    ch4 = staining_layout_channels$ch4,
+    ch5 = staining_layout_channels$ch5,
+    ch6 = staining_layout_channels$ch6
+    )
+
+# Append new staining_layout to the staining_layout table 
+tic("Adding new staining_layout to database")
+new_staining_layout %>%
+    dbWriteTable(pool.manuscript202505, "staining_layout", ., append = TRUE)
+toc()
+
 
 tic("Adding new measurements to database")
 new_measurement %>%
