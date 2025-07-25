@@ -223,10 +223,10 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
     mutate(measurement_descriptor = str_extract(measurement_descriptor, pattern = "\\d") %>% as.numeric(),
            timepoint_descriptor = str_extract(timepoint_descriptor, pattern = "\\d+") %>% as.numeric()) %>%
     mutate(local_path = results_list) %>% 
-    rowwise() %>%
-    mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
     mutate(staining_layout_id = 1203) %>% ## THIS IS A PLACEHOLDER! (1203 is the last entry in the table when I wrote to it) <===============================================================
-    anti_join(existing_measurement)
+    rowwise() %>%
+    mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) #%>%
+    # anti_join(existing_measurement)
 toc()
 
 # Extract channel list from the yml file, based on the version indicated whren calling this script
@@ -272,17 +272,17 @@ tic("Adding new observations to database")
 #   unite("observation", contains("measurement"), sep = "___")
 ## -------------------------------------------------
 
-furrr::future_map2(new_measurement$measurement_id,
-                   new_measurement$local_path,
-                     ~ { read_and_merge_measurements(.y) %>% # .y is the second argument, i.e. 'new_measurement$local_path'
-                           mutate(measurement_id = .x) %>% # .x is the first argument, i.e. 'new_measurement$measurement_id'
-                           #separate(observation, c("id_observation", "id_observation_checksum"), sep = "___" ) %>%. #these columns are no logner used in the current version of the DB
-                           dbWriteTable(pool.manuscript202505, "observation", ., append = TRUE)
-                         # print(paste0("appended ", .y))
-                         # flush.console()
-                       }
-    )
+## parallelize the read_and_merge_measurements() function to all the measurements (as listed in the measurement_id of the new_measurements 
+# table and located in the indicated local_path), with the addition of the corresponding 'measurement_id' as a primary key and then write to the DB.
+furrr::future_map2( new_measurement$measurement_id,
+                    new_measurement$local_path,
+                    # ~ indicates the start of an anonymous lambda function to be parallelized following the pair of lists above 
+                    ~ {read_and_merge_measurements(.y) %>% # .y is the second argument, i.e. 'new_measurement$local_path'
+                          mutate(measurement_id = .x) %>% # .x is the first argument, i.e. 'new_measurement$measurement_id'
+                          dbWriteTable(pool.manuscript202505, "observation", ., append = TRUE)
+                    })
 toc()
+
 
 
 
