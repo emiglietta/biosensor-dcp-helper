@@ -22,7 +22,7 @@ if (length(args) < 3) {
 # session_id is the name of the specific 'reading' of the plate, i.e. "000012126003__2025-01-16T14_31_24-Measurement_1"
 session_id = args[1] # takes the value from the first argument when calling the function from CLI
 yml_path = args[2] # 2nd argument, path to the yaml file containing the different options for the staining layout
-staining_layout_version = arges[3] #3rd argument, version of the staining layout
+staining_layout_version = args[3] #3rd argument, version of the staining layout
 
 # session_id = 000012126003__2025-01-16T14_31_24-Measurement_1
 # yml_path = "dcp_helper_csaba/vignettes/staining_layouts.yml"
