@@ -9,6 +9,8 @@ library(digest)
 library(furrr)
 library(yaml)
 
+args = commandArgs(trailingOnly=TRUE)
+
 if (length(args) < 3) {
   print(paste0(length(args), " arguments were provided"),
   stop("Usage: Rscript aggregate_data.R <session_id> <yml_path> <staining_layout_version>", call. = FALSE)
