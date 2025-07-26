@@ -204,10 +204,23 @@ toc()
 
 # Append new sample to the sample table 
 tic("Adding new sample to database")
-new_sample <- tibble(sample_id = session_id %>% str_extract(pattern = "0000\\d+"))
 
-new_sample %>%
+sample <- tbl(pool.manuscript202505, "sample")
+
+# Check if sample_id already exists
+existing_sample <- sample %>%
+  filter(sample_id == !!sample_id) %>%
+  collect()
+
+# Only write if sample_id doesn't exist
+if (nrow(existing_sample) == 0) {
+  new_sample <- tibble(sample_id = sample_id)
+  
+  new_sample %>%
     dbWriteTable(pool.manuscript202505, "sample", ., append = TRUE)
+} else {
+    print(paste0(sample_id, " already exists in the sample table"))
+}
 toc()
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
