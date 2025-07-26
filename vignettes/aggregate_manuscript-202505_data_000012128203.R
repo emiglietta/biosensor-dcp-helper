@@ -1,10 +1,4 @@
 
-
-
-## ----setup, include=FALSE---------------------------------------------------------------------------------------------------------------------
-knitr::opts_chunk$set(echo = TRUE)
-
-
 ## ----libraries--------------------------------------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(pool)
@@ -17,6 +11,7 @@ library(yaml)
 
 if (length(args) < 3) {
   stop("Usage: Rscript aggregate_data.R <session_id> <yml_path> <staining_layout_version>", call. = FALSE)
+  print(paste0(length(args), " arguments were provided"))
 }
 
 # session_id is the name of the specific 'reading' of the plate, i.e. "000012126003__2025-01-16T14_31_24-Measurement_1"
