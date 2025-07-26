@@ -211,6 +211,12 @@ measurement <- tbl(pool.manuscript202505, "measurement")
 # i.e. "000012112403__2021-06-09T14_14_23-Measurement_1-sk1-A01-f01-ch1"
 existing_measurement <- measurement %>% dplyr::select(measurement_id, measurement_checksum) %>% distinct() %>% collect()
 
+# Extract the highest staining_layout_id from the database
+max_id <- staining_layout %>%
+  summarise(max_id = max(staining_layout_id, na.rm = TRUE)) %>%
+  collect() %>%
+  pull(max_id)
+  
 new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\\d+"),
          session_id = session_id,
          measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
