@@ -207,6 +207,8 @@ tic("Adding new sample to database")
 
 sample <- tbl(pool.manuscript202505, "sample")
 
+sample_id = session_id %>% str_extract(pattern = "0000\\d+")
+
 # Check if sample_id already exists
 existing_sample <- sample %>%
   filter(sample_id == !!sample_id) %>%
