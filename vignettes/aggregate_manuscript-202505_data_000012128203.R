@@ -31,7 +31,7 @@ if (!file.exists(yml_path)) {
   stop(paste("Error: YAML file not found at:", yml_path), call. = FALSE)
 }
 
-bucket_dir = "s3://ascstore/flatfield/Batch_000012128203/"             # AWS S3 folder containing single-cell morphological measurements (or observations)
+bucket_dir = "s3://ascstore/flatfield/Batch_000012128203"             # AWS S3 folder containing single-cell morphological measurements (or observations)
 results_dir = "/home/ubuntu/data_tmp" # temporary local folder to pull single cell data
 
 print(paste("Location of files in bucket: ", file.path(bucket_dir,session_id)))
@@ -46,8 +46,8 @@ if ( dir.exists( file.path(results_dir,session_id) ) ) {
   print("needs to download")
   dir.create(file.path(results_dir,session_id))
   system( paste('aws s3 sync',
-                paste0(bucket_dir, session_id),
-                paste0(results_dir, session_id),
+                file.path(bucket_dir, session_id),
+                file.path(results_dir, session_id),
                 '--exclude "*" --include "*mid24*.csv" --include "*resolution1*.csv" --force-glacier-transfer --no-progress'
                 ) )
 }
@@ -218,6 +218,7 @@ measurement <- tbl(pool.manuscript202505, "measurement")
 #measurement_id is the id of each image (field of view)
 # i.e. "000012112403__2021-06-09T14_14_23-Measurement_1-sk1-A01-f01-ch1"
 existing_measurement <- measurement %>% dplyr::select(measurement_id, measurement_checksum) %>% distinct() %>% collect()
+
 new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\\d+"),
          session_id = session_id,
          measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
@@ -230,10 +231,10 @@ new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\
     mutate(local_path = results_list) %>% 
     #############################################
     # this is adding 1 to the id for each image, but i need to add for each well!!!
-    mutate(staining_layout_id = max_id + dense_rank(well)) %>%. # add sequentially incrementing numbers for each well, based on the last satining_layout_id listed in the DB
+    mutate(staining_layout_id = max_id + dense_rank(well)) %>% # add sequentially incrementing numbers for each well, based on the last satining_layout_id listed in the DB
     rowwise() %>%
-    mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) #%>%
-    # anti_join(existing_measurement)
+    mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
+    anti_join(existing_measurement)
 toc()
 
 # Extract channel list from the yml file, based on the version indicated whren calling this script
@@ -243,7 +244,7 @@ staining_layout_channels <- staining_layout_channels <- get_validated_channels(y
 new_staining_layout <- new_measurement %>%
   mutate(row = match(str_extract(well, "[A-Z]"), LETTERS),   # Convert row letter to number (A=1, B=2, ..., Z=26)
     col = as.numeric(str_extract(well, "\\d+"))) %>%         # Column is just the numeric part
-  select(well,row,col, staining_layout_id) %>%
+  select(well,row,col,staining_layout_id) %>%
   distinct(well, .keep_all = TRUE) %>%
   mutate(
     staining_layout = staining_layout_version,
