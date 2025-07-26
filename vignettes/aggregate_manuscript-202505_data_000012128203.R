@@ -182,10 +182,22 @@ pool.manuscript202505 <- pool::dbPool(RPostgres::Postgres(),
 
 # Append new imaging session to the session table 
 tic("Adding new session to database")
-new_session <- tibble(session_id = session_id)
 
-new_session %>%
+# Check if session_id already exists
+existing_session <- session %>%
+  filter(session_id == !!session_id) %>%
+  collect()
+
+# Only write if session_id doesn't exist
+if (nrow(existing_session) == 0) {
+  new_session <- tibble(session_id = session_id)
+  
+  new_session %>%
     dbWriteTable(pool.manuscript202505, "session", ., append = TRUE)
+}
+else{
+    print(paste0(session_id, " already exists in the session table"))
+}
 toc()
 
 # Append new sample to the sample table 
