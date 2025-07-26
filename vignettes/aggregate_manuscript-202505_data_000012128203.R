@@ -196,10 +196,10 @@ if (nrow(existing_session) == 0) {
   
   new_session %>%
     dbWriteTable(pool.manuscript202505, "session", ., append = TRUE)
-}
-else{
+} else {
     print(paste0(session_id, " already exists in the session table"))
 }
+
 toc()
 
 # Append new sample to the sample table 
