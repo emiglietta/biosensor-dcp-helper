@@ -24,19 +24,19 @@ print(paste0("Processing plate ", plate_name))
 bucket_mount_dir = "/home/ubuntu/bucket"
 
 inbox_dir = "inbox_mit"
-flatfield_dir = "flatfieldv2_test"
-metadata_dir = "dcp_helper/metadatav2_test"
+flatfield_dir = "flatfield/Batch_000012128303"
+metadata_dir = "dcp_helper_csaba/metadata/Batch_000012128303"
 
 new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #relative path acceptable
 inbox_path_base= normalizePath(paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/")) #absolute path with /home/ubuntu/ required
 flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
 
-dcp_helper_config_dir = "~/mcsaba/biosensor/src/dcp_helper/python"
+dcp_helper_config_dir = "~/dcp_helper_csaba/python"
 
-path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012116403_20220926.yml") # should match with Index.idx.xml metadata
+path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012128303.yml") # should match with Index.idx.xml metadata
 
 # To list unique channel names you can run the following command
-# `tail -1000 Index.idx.xml | grep ChannelName | sort -u`
+# `grep 'Entry ChannelID' -A1 Index.xml  #grep the line of the string and 1 line below it`
 
 ################ Creating target dir
 
@@ -59,13 +59,10 @@ new_json_path_segmentation = "~/dcp_helper/python/job_segmentation_template.json
 
 # TO REPRODUCE
 new_json_path_featureextraction_ch2 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch2_template.json")
-# new_json_path_featureextraction_ch3_ch4 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch3_ch4_template.json")
 new_json_path_featureextraction_ch3_ch4 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch3_ch4_downsampled_template.json")
-# new_json_path_featureextraction_ch5_ch6 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch5_ch6_template.json")
 new_json_path_featureextraction_ch5_ch6 =  file.path(dcp_helper_config_dir, "job_featureextraction_ch5_ch6_downsampled_template.json")
 
 python_call_submitjob = "python ~/DCP2.0/run.py submitJob "
-# python_call_submitjob = "python ~/Distributed-CellProfiler/run.py submitJob "
 
 ################ This is where the execution starts
 
@@ -77,7 +74,6 @@ start.time <- Sys.time()
 #       PHASE 0: initiate metadata dataframe       #
 #==================================================#
 
-# loaddata_output = extract_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml )
 loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml ) %>%
    separate(Metadata_ChannelCPName, c("Metadata_ChannelCPName", "Metadata_PlaneID"), '_') %>%
    transform(., Metadata_PlaneID = as.numeric(Metadata_PlaneID)) %>%
@@ -96,7 +92,7 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    rename(row = Metadata_Row, col = Metadata_Col, fld = Metadata_FieldID, n_zst = Metadata_PlaneID, well = Metadata_Well) %>%
    mutate(zst = sprintf("%02d", n_zst+2)) %>%
    mutate(fld = sprintf("%02d", fld)) %>%
-   rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",timepoint+1)) %>%
+   rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",`as.numeric(timepoint)`+1)) %>%
    rename(abstime = Metadata_AbsTime) %>%
    rename(ext = type) %>%
    mutate(name = file.path(Image_PathName, file_name)) %>%
