@@ -15,7 +15,7 @@ format_output_structure <- function(metadata_tags){
 plate_name = args = commandArgs(trailingOnly=TRUE)
 
 # for debugging only
-#plate_name = "000012095203__2019-12-09T17_58_26-Measurement_1"
+#plate_name = "000012128303__2025-06-17T10_53_56-Measurement_1"
 
 print(paste0("Processing plate ", plate_name))
 
@@ -24,8 +24,8 @@ print(paste0("Processing plate ", plate_name))
 bucket_mount_dir = "/home/ubuntu/bucket"
 
 inbox_dir = "inbox_mit"
-flatfield_dir = "flatfield/Batch_000012128303"
-metadata_dir = "dcp_helper_csaba/metadata/Batch_000012128303"
+flatfield_dir = "flatfield"
+metadata_dir = "dcp_helper_csaba/metadata"
 
 new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #relative path acceptable
 inbox_path_base= normalizePath(paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/")) #absolute path with /home/ubuntu/ required
