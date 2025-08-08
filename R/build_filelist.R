@@ -26,7 +26,7 @@ build_filelist <- function(path, force, path_base, path_yml){
     # TODO: re-add code if Index.idx.xml does not exist
     print("Initiating file list")
 
-    source(paste("python3.8 -m pe2loaddata",
+    system(paste("python3.8 -m pe2loaddata",
                 "--index-directory", path,
                 "--index-file", file.path(path, "Index.xml"),
                 path_yml,
