@@ -73,22 +73,18 @@ writeLines(c("Start time: ", start.time), fileConn)
 #==================================================#
 #       PHASE 0: initiate metadata dataframe       #
 #==================================================#
-print("PREPARING TO RUN build_filelist")
-print(paste("inbox_path_base / path:",inbox_path_base))
-print(paste("new_path_base / path_base:",new_path_base))
-print(paste("path_yml / path:",path_yml))
 
 loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml) %>%
-   separate(Metadata_ChannelCPName, c("Metadata_ChannelCPName", "Metadata_PlaneID"), '_') %>%
+   separate(Metadata_ChannelName, c("Metadata_ChannelName", "Metadata_PlaneID"), '_') %>%
    transform(., Metadata_PlaneID = as.numeric(Metadata_PlaneID)) %>%
    replace_na(list(Metadate_PlaneID = 0)) %>%
    mutate(Metadata_ChannelID = case_when(
-     Metadata_ChannelCPName == "PhaseContrast" ~ 1,
-     Metadata_ChannelCPName == "Brightfield" ~ 2,
-     Metadata_ChannelCPName == "Ch3" ~ 3,
-     Metadata_ChannelCPName == "Ch4" ~ 4,
-     Metadata_ChannelCPName == "Ch5" ~ 5,
-     Metadata_ChannelCPName == "Ch6" ~ 6
+     Metadata_ChannelName == "PhaseContrast" ~ 1,
+     Metadata_ChannelName == "Brightfield" ~ 2,
+     Metadata_ChannelName == "Ch3" ~ 3,
+     Metadata_ChannelName == "Ch4" ~ 4,
+     Metadata_ChannelName == "Ch5" ~ 5,
+     Metadata_ChannelName == "Ch6" ~ 6
    )) %>%
    mutate(channel = paste0('ch', Metadata_ChannelID)) %>%
    separate(Image_FileName, c("file_name", "type"), sep = "\\.") %>%
