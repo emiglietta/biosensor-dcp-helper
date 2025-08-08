@@ -21,12 +21,14 @@ build_filelist <- function(path, force, path_base, path_yml){
   } else {
     # TODO: re-add code if Index.idx.xml does not exist
     print("Initiating file list")
+
     system(paste("python3.8 -m pe2loaddata",
                 "--index-directory", path,
                 "--index-file", file.path(path, "Index.xml"),
                 path_yml,
                 file.path(path_base, "loaddata_output.csv"),     
-                "--search-subdirectories"))
+                "--search-subdirectories",
+                "; echo 'Finished running pe2loaddata'"))
   }
 
   print("Reading file list")
