@@ -12,3 +12,5 @@ data
 figures
 .httr-oauth
 temp
+inst/.DS_Store
+.DS_Store
