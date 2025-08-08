@@ -31,7 +31,7 @@ new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #re
 inbox_path_base= paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/") #absolute path with /home/ubuntu/ required.
 flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
 
-dcp_helper_config_dir = "~/dcp_helper_csaba/python"
+dcp_helper_config_dir = "/home/ubuntu/dcp_helper_csaba/python"
 
 path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012128303.yml") # should match with Index.idx.xml metadata
 
@@ -73,8 +73,12 @@ writeLines(c("Start time: ", start.time), fileConn)
 #==================================================#
 #       PHASE 0: initiate metadata dataframe       #
 #==================================================#
+print("PREPARING TO RUN build_filelist")
+print(paste("inbox_path_base / path:",inbox_path_base))
+print(paste("new_path_base / path_base:",new_path_base))
+print(paste("path_yml / path:",path_yml))
 
-loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml ) %>%
+loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_base, path_yml) %>%
    separate(Metadata_ChannelCPName, c("Metadata_ChannelCPName", "Metadata_PlaneID"), '_') %>%
    transform(., Metadata_PlaneID = as.numeric(Metadata_PlaneID)) %>%
    replace_na(list(Metadate_PlaneID = 0)) %>%

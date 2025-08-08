@@ -13,6 +13,10 @@
 #'
 #' @examples
 build_filelist <- function(path, force, path_base, path_yml){
+  print("EXECUTING build_filelist")
+  print(paste("inbox_path_base / path:",path))
+  print(paste("new_path_base / path_base:",path_base))
+  print(paste("path_yml:",path_yml))
 
   # parent <- path %>% str_split(pattern = "/") %>% unlist %>% .[length(.)-1]
 
