@@ -28,7 +28,7 @@ flatfield_dir = "flatfield"
 metadata_dir = "dcp_helper_csaba/metadata"
 
 new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #relative path acceptable
-inbox_path_base= normalizePath(paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/")) #absolute path with /home/ubuntu/ required
+inbox_path_base= paste(bucket_mount_dir, inbox_dir, plate_name, "Images/", sep="/") #absolute path with /home/ubuntu/ required
 flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
 
 dcp_helper_config_dir = "~/dcp_helper_csaba/python"
@@ -68,7 +68,7 @@ python_call_submitjob = "python ~/DCP2.0/run.py submitJob "
 
 fileConn <- file(file.path(new_path_base, paste0("metadata_generation_", plate_name,".log")))
 start.time <- Sys.time()
-# writeLines(c("Start time: ", start.time), fileConn)
+writeLines(c("Start time: ", start.time), fileConn)
 
 #==================================================#
 #       PHASE 0: initiate metadata dataframe       #
