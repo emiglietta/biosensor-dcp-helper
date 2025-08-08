@@ -41,3 +41,4 @@ metadata:
     ObjectiveMagnification: ObjectiveMagnification
     ObjectiveNA: ObjectiveNA
     ExposureTime: ExposureTime
+    TimepointID: TimepointID
