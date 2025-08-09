@@ -3,10 +3,10 @@ library(tidyverse)
 library(readr)
 
 # Function to restructure the CSV
-restructure_csv <- function(input_file, output_file = NULL) {
+restructure_csv <- function(df, output_file = NULL) {
   
   # Read the CSV file
-  df <- read_csv(input_file)
+#   df <- read_csv(input_file)  #if starting from file
   
   # Get all FileName columns
   filename_cols <- grep("^FileName_", names(df), value = TRUE)
