@@ -7,7 +7,7 @@
 library(tidyverse)
 library(dcphelper)
 library(tictoc)
-source("restructure_new_pe2loaddata_output.R") #patch to bridge the difference in output of the new pe2loaddata and what this script expects
+source("./restructure_new_pe2loaddata_output.R") #patch to bridge the difference in output of the new pe2loaddata and what this script expects
 
 format_output_structure <- function(metadata_tags){
   paste0(metadata_tags, collapse = "-")
