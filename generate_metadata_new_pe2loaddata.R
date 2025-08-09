@@ -2,7 +2,7 @@
 ## Define directory names - you will have to change this manually!
 ## Make sure the directories contain no spaces!
 ## The pipeline assumes there is a directory in the "inbox" directory that has the following name:
-## Call this script with: Rscript generate_metadata_alternative_setup_20220929.R <measurement_id>
+## Call this script with: Rscript generate_metadata_alternative_setup_20220929.R <measurement_id> <pe2loaddata_config.yml>
 
 library(tidyverse)
 library(dcphelper)
@@ -13,8 +13,9 @@ format_output_structure <- function(metadata_tags){
   paste0(metadata_tags, collapse = "-")
 }
 
-plate_name = args = commandArgs(trailingOnly=TRUE)
-
+args = commandArgs(trailingOnly=TRUE)
+plate_name = args[1]
+yml_file = args[2] 
 # for debugging only
 #plate_name = "000012128303__2025-06-17T10_53_56-Measurement_1"
 
@@ -34,7 +35,7 @@ flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_
 
 dcp_helper_config_dir = "/home/ubuntu/dcp_helper_csaba/python"
 
-path_yml = file.path(dcp_helper_config_dir, "pe2loaddata_config_000012128303.yml") # should match with Index.idx.xml metadata
+path_yml = file.path(dcp_helper_config_dir, yml_file) # should match with Index.idx.xml metadata
 
 # To list unique channel names you can run the following command
 # `grep 'Entry ChannelID' -A1 Index.xml  #grep the line of the string and 1 line below it`
