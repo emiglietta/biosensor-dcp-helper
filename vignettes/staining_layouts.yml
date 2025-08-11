@@ -1,0 +1,14 @@
+- staining_layout: v2
+  ch1: phase_contrast
+  ch2: brightfield
+  ch3: cellevent_caspase
+  ch4: tmrm
+  ch5: cd45
+  ch6: epcam
+- staining_layout: v3
+  ch1: NULL
+  ch2: NULL
+  ch3: NULL
+  ch4: NULL
+  ch5: NULL
+  ch6: NULL
