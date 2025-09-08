@@ -248,9 +248,9 @@ existing_measurement <- measurement %>% dplyr::select(measurement_id, measuremen
 
 new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\\d+"),
          session_id = session_id,
-         measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d-sk\\d+-...-f..-ch\\d")
+         measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d+-sk\\d+-...-f..-ch\\d")
          ) %>%
-    separate(measurement_id, remove = FALSE, sep = "-", c("t1", "t2", "t3",  "measurement_descriptor", "timepoint_descriptor", "well", "field_descriptor", "channel")) %>%
+    separate(measurement_id, remove = FALSE, sep = "-", c("t1", "t2", "t3", "measurement_descriptor", "timepoint_descriptor", "well", "field_descriptor", "channel")) %>%
     select(-(t1:t3)) %>% # drop t1, t2, t3
     select(-(channel)) %>% # drop channel
     mutate(measurement_descriptor = str_extract(measurement_descriptor, pattern = "\\d") %>% as.numeric(),
