@@ -269,7 +269,7 @@ staining_layout_channels <- get_validated_channels(yml_path, staining_template_n
 new_staining_layout <- new_measurement %>%
   mutate(row = match(str_extract(well, "[A-Z]"), LETTERS),   # Convert row letter to number (A=1, B=2, ..., Z=26)
     col = as.numeric(str_extract(well, "\\d+"))) %>%         # Column is just the numeric part
-  select(well,row,col,staining_layout_id) %>%
+  select(well,row,col) %>%
   distinct(well, .keep_all = TRUE) %>%
   mutate(
     staining_layout = staining_template_name,
