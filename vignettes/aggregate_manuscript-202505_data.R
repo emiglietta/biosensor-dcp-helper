@@ -116,7 +116,7 @@ get_validated_channels <- function(yml_path, staining_template_name) {
   # Find the requested staining_template_name
   layout <- NULL
   for (item in yaml_data) {
-    if (is.list(item) && !is.null(item$staining_template_name) && item$staining_layout == staining_template_name) {
+    if (is.list(item) && !is.null(item$staining_layout) && item$staining_layout == staining_template_name) {
       layout <- item
       break
     }
