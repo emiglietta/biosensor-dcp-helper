@@ -202,28 +202,30 @@ if (nrow(existing_session) == 0) {
 
 toc()
 
-# Append new sample to the sample table 
-tic("Adding new sample to database")
+### Remove because 'sample' is not longer one of the tables of the DB
 
-sample <- tbl(pool.manuscript202505, "sample")
+# # Append new sample to the sample table 
+# tic("Adding new sample to database")
 
-sample_id = session_id %>% str_extract(pattern = "0000\\d+")
+# sample <- tbl(pool.manuscript202505, "sample")
 
-# Check if sample_id already exists
-existing_sample <- sample %>%
-  filter(sample_id == !!sample_id) %>%
-  collect()
+# sample_id = session_id %>% str_extract(pattern = "0000\\d+")
 
-# Only write if sample_id doesn't exist
-if (nrow(existing_sample) == 0) {
-  new_sample <- tibble(sample_id = sample_id)
+# # Check if sample_id already exists
+# existing_sample <- sample %>%
+#   filter(sample_id == !!sample_id) %>%
+#   collect()
+
+# # Only write if sample_id doesn't exist
+# if (nrow(existing_sample) == 0) {
+#   new_sample <- tibble(sample_id = sample_id)
   
-  new_sample %>%
-    dbWriteTable(pool.manuscript202505, "sample", ., append = TRUE)
-} else {
-    print(paste0(sample_id, " already exists in the sample table"))
-}
-toc()
+#   new_sample %>%
+#     dbWriteTable(pool.manuscript202505, "sample", ., append = TRUE)
+# } else {
+#     print(paste0(sample_id, " already exists in the sample table"))
+# }
+# toc()
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
 # Extract the highest staining_layout_id from the database to inform what id to start from when assigning to new wells
