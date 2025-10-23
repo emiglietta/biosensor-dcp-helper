@@ -264,30 +264,30 @@ new_measurement = tibble(plate_id = session_id %>% str_extract(pattern = "0000\\
     anti_join(existing_measurement)
 toc()
 
-# Extract channel list from the yml file, based on the version indicated whren calling this script
-# TODO: CURRENT VERSION ASSUMES ONE STAINING LAYOUT PER PLATE (SESSION_ID), IT MIGHT NOT BE THIS WAY IN THE FUTURE!
-staining_layout_channels <- get_validated_channels(yml_path, staining_template_name = staining_template_name)
+# # Extract channel list from the yml file, based on the version indicated whren calling this script
+# # TODO: CURRENT VERSION ASSUMES ONE STAINING LAYOUT PER PLATE (SESSION_ID), IT MIGHT NOT BE THIS WAY IN THE FUTURE!
+# staining_layout_channels <- get_validated_channels(yml_path, staining_template_name = staining_template_name)
 
-new_staining_layout <- new_measurement %>%
-  mutate(row = match(str_extract(well, "[A-Z]"), LETTERS),   # Convert row letter to number (A=1, B=2, ..., Z=26)
-    col = as.numeric(str_extract(well, "\\d+"))) %>%         # Column is just the numeric part
-  select(well,row,col) %>%
-  distinct(well, .keep_all = TRUE) %>%
-  mutate(
-    staining_layout = staining_template_name,
-    ch1 = staining_layout_channels$ch1,
-    ch2 = staining_layout_channels$ch2,
-    ch3 = staining_layout_channels$ch3,
-    ch4 = staining_layout_channels$ch4,
-    ch5 = staining_layout_channels$ch5,
-    ch6 = staining_layout_channels$ch6
-    ) 
+# new_staining_layout <- new_measurement %>%
+#   mutate(row = match(str_extract(well, "[A-Z]"), LETTERS),   # Convert row letter to number (A=1, B=2, ..., Z=26)
+#     col = as.numeric(str_extract(well, "\\d+"))) %>%         # Column is just the numeric part
+#   select(well,row,col) %>%
+#   distinct(well, .keep_all = TRUE) %>%
+#   mutate(
+#     staining_layout = staining_template_name,
+#     ch1 = staining_layout_channels$ch1,
+#     ch2 = staining_layout_channels$ch2,
+#     ch3 = staining_layout_channels$ch3,
+#     ch4 = staining_layout_channels$ch4,
+#     ch5 = staining_layout_channels$ch5,
+#     ch6 = staining_layout_channels$ch6
+#     ) 
 
-# Append new staining_layout to the staining_layout table 
-tic("Adding new staining_layout to database")
-new_staining_layout %>%
-    dbWriteTable(pool.manuscript202505, "staining_layout", ., append = TRUE)
-toc()
+# # Append new staining_layout to the staining_layout table 
+# tic("Adding new staining_layout to database")
+# new_staining_layout %>%
+#     dbWriteTable(pool.manuscript202505, "staining_layout", ., append = TRUE)
+# toc()
 
 
 tic("Adding new measurements to database")
