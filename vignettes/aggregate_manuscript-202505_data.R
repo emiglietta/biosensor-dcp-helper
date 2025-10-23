@@ -228,13 +228,13 @@ toc()
 # toc()
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
-# Extract the highest staining_layout_id from the database to inform what id to start from when assigning to new wells
-staining_layout <- tbl(pool.manuscript202505, "legacy_staining_layout")
+# # Extract the highest staining_layout_id from the database to inform what id to start from when assigning to new wells
+# staining_layout <- tbl(pool.manuscript202505, "legacy_staining_layout")
 
-max_id <- staining_layout %>%
-  summarise(max_id = max(staining_layout_id, na.rm = TRUE)) %>%
-  collect() %>%
-  pull(max_id)
+# max_id <- staining_layout %>%
+#   summarise(max_id = max(staining_layout_id, na.rm = TRUE)) %>%
+#   collect() %>%
+#   pull(max_id)
 
 # results_dir is a list of absolute paths to the main results folder for each well (the one ending in "ch1")
 # i.e: "/home/ubuntu/dcp_helper_csaba/data/results/000012126003__2025-01-16T14_31_24-Measurement_1/000012126003__2025-01-16T14_31_24-Measurement_1-sk1-C14-f01-ch1"
@@ -248,7 +248,7 @@ measurement <- tbl(pool.manuscript202505, "measurement")
 # i.e. "000012112403__2021-06-09T14_14_23-Measurement_1-sk1-A01-f01-ch1"
 existing_measurement <- measurement %>% dplyr::select(measurement_id, measurement_checksum) %>% distinct() %>% collect()
 
-new_measurement = tibble(sample_id = session_id %>% str_extract(pattern = "0000\\d+"),
+new_measurement = tibble(plate_id = session_id %>% str_extract(pattern = "0000\\d+"),
          session_id = session_id,
          measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d+-sk\\d+-...-f..-ch\\d")
          ) %>%
