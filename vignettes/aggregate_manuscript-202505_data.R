@@ -249,19 +249,20 @@ measurement <- tbl(pool.manuscript202505, "measurement")
 existing_measurement <- measurement %>% dplyr::select(measurement_id, measurement_checksum) %>% distinct() %>% collect()
 
 new_measurement = tibble(plate_id = session_id %>% str_extract(pattern = "0000\\d+"),
-         session_id = session_id,
-         measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d+-sk\\d+-...-f..-ch\\d")
-         ) %>%
+        session_id = session_id,
+        measurement_id = results_list %>% str_extract(pattern = "0000\\d+__\\d+-\\d\\d-\\d+T\\d+_\\d+_\\d+-Measurement_\\d+-sk\\d+-...-f..-ch\\d")
+        ) %>%
     separate(measurement_id, remove = FALSE, sep = "-", c("t1", "t2", "t3", "measurement_descriptor", "timepoint_descriptor", "well", "field_descriptor", "channel")) %>%
     select(-(t1:t3)) %>% # drop t1, t2, t3
     select(-(channel)) %>% # drop channel
     mutate(measurement_descriptor = str_extract(measurement_descriptor, pattern = "\\d+") %>% as.numeric(),
-           timepoint_descriptor = str_extract(timepoint_descriptor, pattern = "\\d+") %>% as.numeric()) %>%
+          timepoint_descriptor = str_extract(timepoint_descriptor, pattern = "\\d+") %>% as.numeric()) %>%
     mutate(local_path = results_list) %>% 
     mutate(staining_template_name = staining_template_name) %>% # staining tamplate name provided in arguments
     rowwise() %>%
     mutate(measurement_checksum = compute_measurement_checksum(local_path %>% as.character()) %>% as.character()) %>%
-    anti_join(existing_measurement)
+    anti_join(existing_measurement, by = "measurement_id")
+
 toc()
 
 # # Extract channel list from the yml file, based on the version indicated whren calling this script
