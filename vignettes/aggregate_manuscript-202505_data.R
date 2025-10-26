@@ -202,30 +202,29 @@ if (nrow(existing_session) == 0) {
 
 toc()
 
-### Remove because 'sample' is not longer one of the tables of the DB
+### The 'sample' table is now called 'plate'. It has 2 cols: plate_id (e.g. '000012130203') and kit_id (e.g. 'CL-1C57')
+# Append new entry to the plate table 
+tic("Adding new plate to database")
 
-# # Append new sample to the sample table 
-# tic("Adding new sample to database")
+plate <- tbl(pool.manuscript202505, "plate")
 
-# sample <- tbl(pool.manuscript202505, "sample")
+plate_id = session_id %>% str_extract(pattern = "0000\\d+")
 
-# sample_id = session_id %>% str_extract(pattern = "0000\\d+")
+# Check if plate already exists
+existing_plate <- plate %>%
+  filter(plate_id == !!plate_id) %>%
+  collect()
 
-# # Check if sample_id already exists
-# existing_sample <- sample %>%
-#   filter(sample_id == !!sample_id) %>%
-#   collect()
-
-# # Only write if sample_id doesn't exist
-# if (nrow(existing_sample) == 0) {
-#   new_sample <- tibble(sample_id = sample_id)
+# Only write if plate_id doesn't exist
+if (nrow(existing_plate) == 0) {
+  new_plate <- tibble(plate_id = plate_id)
   
-#   new_sample %>%
-#     dbWriteTable(pool.manuscript202505, "sample", ., append = TRUE)
-# } else {
-#     print(paste0(sample_id, " already exists in the sample table"))
-# }
-# toc()
+  new_plate %>%
+    dbWriteTable(pool.manuscript202505, "plate", ., append = TRUE)
+} else {
+    print(paste0(plate_id, " already exists in the plate table"))
+}
+toc()
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
 # # Extract the highest staining_layout_id from the database to inform what id to start from when assigning to new wells
