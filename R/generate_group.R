@@ -12,7 +12,7 @@
 #'
 #
 
-generate_group <- function(plate_name, channel_n, path_base, group_tag="all", group_template_file="~/inst/config/group_template.txt"){
+generate_group <- function(plate_name, channel_n, path_base, group_tag="all", group_template_file="./inst/config/group_template.txt"){
 
   # expanding combinations
   df <- expand.grid(plate_name, channel_n) %>%
