@@ -33,7 +33,7 @@ new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #re
 inbox_path_base= paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/") #absolute path with /home/ubuntu/ required.
 flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
 
-dcp_helper_config_dir = "/home/ubuntu/dcp_helper_csaba/python"
+dcp_helper_config_dir = "/home/ubuntu/dcp_helper_csaba/inst/config"
 
 path_yml = file.path(dcp_helper_config_dir, yml_file) # should match with Index.idx.xml metadata
 
