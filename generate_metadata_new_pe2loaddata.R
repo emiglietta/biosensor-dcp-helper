@@ -181,7 +181,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_ffc_n),
                        new_path_base,
-                       group_tag = "ffc")
+                       group_tag = "ffc",
+                       group_template_file="./inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -278,7 +279,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
-                       group_tag = "projection")
+                       group_tag = "projection",
+                       group_template_file="./inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -374,7 +376,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
-                       group_tag = "brightfieldprojection")
+                       group_tag = "brightfieldprojection",
+                       group_template_file="./inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -450,7 +453,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_segmentation_n),
                        new_path_base,
-                       group_tag = "segmentation")
+                       group_tag = "segmentation",
+                       group_template_file="./inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -568,7 +572,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch3_ch4")
+                       group_tag = "featureextraction_ch3_ch4",
+                       group_template_file="./inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -665,7 +670,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch5_ch6")
+                       group_tag = "featureextraction_ch5_ch6",
+                       group_template_file="./inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -784,7 +790,8 @@ path <- c()
 path <- generate_group(plate_name,
                        c(channel_measurement_n),
                        new_path_base,
-                       group_tag = "featureextraction_ch2")
+                       group_tag = "featureextraction_ch2",
+                       group_template_file="./inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
