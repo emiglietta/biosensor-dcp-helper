@@ -279,7 +279,7 @@ path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
                        group_tag = "projection",
-                       group_template_file="group_template.txt")
+                       group_template_file="~/inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
@@ -376,7 +376,7 @@ path <- generate_group(plate_name,
                        c(channel_projection_n),
                        new_path_base,
                        group_tag = "brightfieldprojection",
-                       group_template_file="group_template.txt")
+                       group_template_file="~/inst/config/group_template.txt")
 print(path)
 print("Grouping data using python script")
 system(path)
