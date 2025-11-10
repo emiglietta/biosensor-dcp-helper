@@ -180,28 +180,6 @@ pool.manuscript202505 <- pool::dbPool(RPostgres::Postgres(),
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
 
-# Append new imaging session to the session table 
-tic("Adding new session to database")
-
-session <- tbl(pool.manuscript202505, "session")
-
-# Check if session_id already exists
-existing_session <- session %>%
-  filter(session_id == !!session_id) %>%
-  collect()
-
-# Only write if session_id doesn't exist
-if (nrow(existing_session) == 0) {
-  new_session <- tibble(session_id = session_id)
-  
-  new_session %>%
-    dbWriteTable(pool.manuscript202505, "session", ., append = TRUE)
-} else {
-    print(paste0(session_id, " already exists in the session table"))
-}
-
-toc()
-
 ### The 'sample' table is now called 'plate'. It has 2 cols: plate_id (e.g. '000012130203') and kit_id (e.g. 'CL-1C57')
 # Append new entry to the plate table 
 tic("Adding new plate to database")
@@ -226,6 +204,27 @@ if (nrow(existing_plate) == 0) {
 }
 toc()
 
+# Append new imaging session to the session table 
+tic("Adding new session to database")
+
+session <- tbl(pool.manuscript202505, "session")
+
+# Check if session_id already exists
+existing_session <- session %>%
+  filter(session_id == !!session_id) %>%
+  collect()
+
+# Only write if session_id doesn't exist
+if (nrow(existing_session) == 0) {
+  new_session <- tibble(session_id = session_id)
+  
+  new_session %>%
+    dbWriteTable(pool.manuscript202505, "session", ., append = TRUE)
+} else {
+    print(paste0(session_id, " already exists in the session table"))
+}
+
+toc()
 ## ---------------------------------------------------------------------------------------------------------------------------------------------
 # # Extract the highest staining_layout_id from the database to inform what id to start from when assigning to new wells
 # staining_layout <- tbl(pool.manuscript202505, "legacy_staining_layout")
