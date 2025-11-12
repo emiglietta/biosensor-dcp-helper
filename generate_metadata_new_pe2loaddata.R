@@ -96,7 +96,7 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    rename(row = Metadata_Row, col = Metadata_Col, fld = Metadata_FieldID, n_zst = Metadata_PlaneID, well = Metadata_Well) %>%
    mutate(zst = sprintf("%02d", n_zst+2)) %>%
    mutate(fld = sprintf("%02d", fld)) %>%
-   rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",as.numeric(timepoint)+1)) %>%
+   rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",as.numeric(timepoint))) %>%
    rename(abstime = Metadata_AbsTime) %>%
    rename(ext = type) %>%
    mutate(name = file.path(Image_PathName, file_name)) %>%
