@@ -89,7 +89,6 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
      Metadata_ChannelCPName == "Ch5" ~ 5,
      Metadata_ChannelCPName == "Ch6" ~ 6
    )) %>%
-   select(-Metadata_ChannelName) %>% # remove this column, as it does not contain useful info
    mutate(channel = paste0('ch', Metadata_ChannelID)) %>%
    separate(Image_FileName, c("file_name", "type"), sep = "\\.") %>%
    mutate(is_image = grepl(pattern = "tiff", x = type)) %>% filter(is_image == TRUE) %>%
