@@ -96,7 +96,7 @@ loaddata_output <- build_filelist(path = inbox_path_base, force=FALSE, new_path_
    mutate(zst = sprintf("%02d", n_zst+2)) %>%
    mutate(fld = sprintf("%02d", fld)) %>%
    rename(timepoint = Metadata_TimepointID) %>% mutate(timepoint = paste0("sk",as.numeric(timepoint))) %>%
-   rename(abstime = Metadata_AbsTime) %>%
+   rename(abstime = Metadata_AbsTime_PhaseContrast_0) %>% # get abstime from the first channel
    rename(ext = type) %>%
    mutate(name = file.path(Image_PathName, file_name)) %>%
    select(-contains("Metadata_")) %>%
