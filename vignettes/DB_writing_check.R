@@ -49,7 +49,7 @@ measurement_count <- nrow(measurement_check)
 # Check what timepoints exist
 timepoint_check <- tbl(pool.manuscript202505, "measurement") %>%
   filter(session_id == !!session_id) %>%
-  select(measurement_id, timepoint_id, well) %>%
+  select(timepoint_id) %>%
   collect()
 
 timepoint_count <- nrow(timepoint_check)
