@@ -46,6 +46,14 @@ measurement_check <- tbl(pool.manuscript202505, "measurement") %>%
 
 measurement_count <- nrow(measurement_check)
 
+# Check what timepoints exist
+timepoint_check <- tbl(pool.manuscript202505, "measurement") %>%
+  filter(session_id == !!session_id) %>%
+  select(measurement_id, timepoint_id, well) %>%
+  collect()
+
+timepoint_count <- nrow(timepoint_check)
+
 # If measurements exist, then query observations using %in%
 if(measurement_count > 0) {
   obs_counts <- tbl(pool.manuscript202505, "observation") %>%
@@ -67,8 +75,9 @@ if(measurement_count > 0) {
   obs_count <- 0
 }
 
+
 # Output results to console
-cat(session_id, "measurement well count:", measurement_count, "||", "observation well count:", obs_count, sep = "  ")
+cat(session_id, "measurement well count:", measurement_count, "||","timepoint count:", timepoint_count, sep = "  ", "observation well count:", obs_count, sep = "  ")
 cat("\n")
 
 # Close the connection pool
