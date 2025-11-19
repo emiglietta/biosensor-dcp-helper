@@ -50,9 +50,10 @@ measurement_count <- nrow(measurement_check)
 timepoint_check <- tbl(pool.manuscript202505, "measurement") %>%
   filter(session_id == !!session_id) %>%
   select(timepoint_id) %>%
+  distinct() %>%
   collect()
 
-timepoint_count <- nrow(timepoint_check)
+unique_timepoint_count <- nrow(timepoint_check)
 
 # If measurements exist, then query observations using %in%
 if(measurement_count > 0) {
@@ -77,7 +78,7 @@ if(measurement_count > 0) {
 
 
 # Output results to console
-cat(session_id, "measurement well count:", measurement_count, "||","timepoint count:", timepoint_count, "||", "observation well count:", obs_count, sep = "  ")
+cat(session_id, "measurement well count:", measurement_count, "||","timepoint count:", unique_timepoint_count, "||", "observation well count:", obs_count, sep = "  ")
 cat("\n")
 
 # Close the connection pool
