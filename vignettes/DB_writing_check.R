@@ -77,7 +77,7 @@ if(measurement_count > 0) {
 
 
 # Output results to console
-cat(session_id, "measurement well count:", measurement_count, "||","timepoint count:", timepoint_count, sep = "  ", "observation well count:", obs_count, sep = "  ")
+cat(session_id, "measurement well count:", measurement_count, "||","timepoint count:", timepoint_count, "||", "observation well count:", obs_count, sep = "  ")
 cat("\n")
 
 # Close the connection pool
