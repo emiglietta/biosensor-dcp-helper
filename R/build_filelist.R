@@ -14,7 +14,14 @@
 #' @examples
 build_filelist <- function(path, force, path_base, path_yml){
 
-  # parent <- path %>% str_split(pattern = "/") %>% unlist() %>% .[length(.)-1]
+  # Check if the index file is Images/Index.xml or images/index.xml (supports structure of raw data from Operetta, pre-export)
+  path <- if (dir.exists(path)) path else gsub("Images$", "images", path) 
+
+  index_file <- if (file.exists(file.path(path, "Index.xml"))) {
+    file.path(path, "Index.xml")
+  } else {
+    file.path(path, "index.xml")
+  }
 
   if (file.exists(file.path(path_base, "loaddata_output.csv")) & force == FALSE){
     print("Found file list")
@@ -24,7 +31,7 @@ build_filelist <- function(path, force, path_base, path_yml){
 
     system(paste("python3.8 -m pe2loaddata",
                 "--index-directory", path,
-                "--index-file", file.path(path, "Index.xml"),
+                "--index-file", index_file,
                 path_yml,
                 file.path(path_base, "loaddata_output.csv"),     
                 "--search-subdirectories",
