@@ -14,9 +14,7 @@
 #' @examples
 build_filelist <- function(path, force, path_base, path_yml){
 
-  # Check if the index file is Images/Index.xml or images/index.xml (supports structure of raw data from Operetta, pre-export)
-  path <- if (dir.exists(path)) path else gsub("Images$", "images", path) 
-
+  # Check if the index file is Index.xml or index.xml (supports structure of raw data from Operetta, pre-export) 
   index_file <- if (file.exists(file.path(path, "Index.xml"))) {
     file.path(path, "Index.xml")
   } else {
