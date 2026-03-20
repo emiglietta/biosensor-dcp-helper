@@ -31,6 +31,8 @@ metadata_dir = "dcp_helper_csaba/metadata"
 
 new_path_base = normalizePath(paste("~", metadata_dir, plate_name, sep="/")) #relative path acceptable
 inbox_path_base= paste(bucket_mount_dir, inbox_dir, plate_name, "Images", sep="/") #absolute path with /home/ubuntu/ required.
+inbox_path_base <- if (dir.exists(inbox_path_base)) inbox_path_base else gsub("Images$", "images", inbox_path_base) #Check Images/ exists, if not, change it to images/ (supports structure of raw data from Operetta, pre-export)
+
 flatfield_path_base= normalizePath(paste(bucket_mount_dir, flatfield_dir, plate_name, sep="/"))
 
 dcp_helper_config_dir = "/home/ubuntu/dcp_helper_csaba/inst/config"
