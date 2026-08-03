@@ -205,7 +205,10 @@ if (nrow(to_repair) == 0) {
     tryCatch({
       for (r in seq_len(nrow(corrected))) {
         row <- corrected[r, ]
-        params <- c(as.list(row[update_cols]), list(mid, row$object_number))
+        # as.list() on a data frame row carries the column names along as list names,
+        # but dbExecute() requires an UNNAMED params list to match $1, $2, ... -- a named
+        # list is rejected outright with "params must not be named", on every row.
+        params <- unname(c(as.list(row[update_cols]), list(mid, row$object_number)))
         n_updated <- dbExecute(con, query, params = params)
         if (n_updated != 1) {
           stop(paste0("expected to update exactly 1 row for object_number ",
