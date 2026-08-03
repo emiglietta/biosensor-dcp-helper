@@ -78,30 +78,46 @@ read_and_merge_measurements <- function(result_path, pattern = "*Cells.csv"){
   # print(measurement.list)
 
   if (length(measurement.list)<1) {
-
     print(paste0("No measurements found for this session: ", result_path))
     return (NULL)
+  }
 
-  } else {
+  tbl_list <- list()
+  for (i in seq_along(measurement.list)) {
+    df <- read_csv(measurement.list[i], show_col_types = FALSE)
 
-    tbl_list <- c()
-    i <- 1
-    # feature.file will be each .csv containing features for a given image ("measurement") 
+    # df will be each .csv containing features for a given image ("measurement") 
     # tbl_list is a list of each feature table
-    for (feature.file in measurement.list) {
-      tbl_list[[i]] <- read_csv(feature.file)
-      i <- i + 1
+    # result_path is already scoped to exactly one plate/timepoint/well/site, so every
+    # file read here should describe a single image. ImageNumber is just this
+    # CellProfiler execution's own internal row-sequence number, not a stable
+    # cross-pipeline identifier (ch2/ch3_ch4/ch5_ch6 are independent CellProfiler runs)
+    # -- assert the assumption instead of silently trusting it.
+    n_images <- n_distinct(df$ImageNumber)
+    if (n_images != 1) {
+      stop(paste0(measurement.list[i], " has ", n_images,
+                  " distinct ImageNumbers, expected exactly 1 for a single site/timepoint. ",
+                  "Merging by ObjectNumber alone is unsafe here -- investigate before proceeding."))
     }
 
-    # reduced.obesrvations is the merged table with all the features for each object ("observation") in all images ("measurements") across all channels
-    # Includes 'ImageNumber', 'ObejctNumber' and then all the features for all channels (except ch1)
-    reduced.observations <- Reduce(function(x, y) merge(x, y, all.x = TRUE),tbl_list) %>%
-      select(-contains("Metadata"))
-    colnames(reduced.observations) <- colnames(reduced.observations) %>%
-      str_replace(.,"projection","")
-
-    return(reduced.observations %>% janitor::clean_names()) #janitor removes all capitalization from the col names
+    if (i > 1) {
+      # ch3_ch4 / ch5_ch6 re-measure the same AreaShape/Location descriptors as ch2 for
+      # the same objects, and can differ from ch2's copy by floating-point rounding.
+      # Drop the duplicates (and ImageNumber, per above) so only ObjectNumber is the key.
+      shared_non_key <- setdiff(intersect(names(df), names(tbl_list[[1]])), "ObjectNumber")
+      df <- df %>% select(-any_of(shared_non_key))
+    }
+    tbl_list[[i]] <- df %>% select(-any_of("AreaShape_ConvexArea"))  # not present in the `observation` table schema
   }
+
+  # reduced.obesrvations is the merged table with all the features for each object ("observation") in all images ("measurements") across all channels
+  # Includes 'ImageNumber', 'ObejctNumber' and then all the features for all channels (except ch1)
+  reduced.observations <- Reduce(function(x, y) merge(x, y, by = c("ImageNumber", "ObjectNumber"), all.x = TRUE), tbl_list) %>%
+    select(-contains("Metadata"))
+  colnames(reduced.observations) <- colnames(reduced.observations) %>%
+    str_replace(., "projection", "")
+
+  return(reduced.observations %>% janitor::clean_names()) #janitor removes all capitalization from the col names
 }
 
 get_validated_channels <- function(yml_path, staining_template_name) {
