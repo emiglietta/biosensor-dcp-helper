@@ -55,7 +55,12 @@ read_and_merge_measurements <- function(result_path, pattern = "*Cells.csv") {
   tbl_list <- list()
   for (i in seq_along(measurement.list)) {
     df <- read_csv(measurement.list[i], show_col_types = FALSE)
-
+    
+    if (nrow(df) == 0) {
+      print(paste0(measurement.list[i], " has 0 objects (empty field of view) -- skipping this measurement."))
+      return(NULL)
+    }
+    
     n_images <- n_distinct(df$ImageNumber)
     if (n_images != 1) {
       stop(paste0(measurement.list[i], " has ", n_images,
