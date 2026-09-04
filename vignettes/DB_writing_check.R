@@ -36,7 +36,8 @@ pool.manuscript202505 <- pool::dbPool(RPostgres::Postgres(),
                        host = RDS_HOST,
                        port = 5432,
                        user = RDS_USER,
-                       password = RDS_TOKEN)
+                       password = RDS_TOKEN,
+		       connect_timeout = 10)
 
 # Check what measurements exist (this should be fast)
 measurement_check <- tbl(pool.manuscript202505, "measurement") %>%
