@@ -93,6 +93,10 @@ read_and_merge_measurements <- function(result_path, pattern = "*Cells.csv"){
     # CellProfiler execution's own internal row-sequence number, not a stable
     # cross-pipeline identifier (ch2/ch3_ch4/ch5_ch6 are independent CellProfiler runs)
     # -- assert the assumption instead of silently trusting it.
+    if (nrow(df) == 0) {
+      print(paste0(measurement.list[i], " has 0 objects (empty field of view) -- skipping this measurement."))
+      return(NULL)
+    }
     n_images <- n_distinct(df$ImageNumber)
     if (n_images != 1) {
       stop(paste0(measurement.list[i], " has ", n_images,
@@ -112,7 +116,7 @@ read_and_merge_measurements <- function(result_path, pattern = "*Cells.csv"){
 
   # reduced.obesrvations is the merged table with all the features for each object ("observation") in all images ("measurements") across all channels
   # Includes 'ImageNumber', 'ObejctNumber' and then all the features for all channels (except ch1)
-  reduced.observations <- Reduce(function(x, y) merge(x, y, by = c("ImageNumber", "ObjectNumber"), all.x = TRUE), tbl_list) %>%
+  reduced.observations <- Reduce(function(x, y) merge(x, y, by = c("ObjectNumber"), all.x = TRUE), tbl_list) %>%
     select(-contains("Metadata"))
   colnames(reduced.observations) <- colnames(reduced.observations) %>%
     str_replace(., "projection", "")
@@ -327,9 +331,13 @@ tic("Adding new observations to database")
 furrr::future_map2( new_measurement$measurement_id,
                     new_measurement$local_path,
                     # ~ indicates the start of an anonymous lambda function to be parallelized following the pair of lists above 
-                    ~ {read_and_merge_measurements(.y) %>% # .y is the second argument, i.e. 'new_measurement$local_path'
+                    ~ {
+                      result <- read_and_merge_measurements(.y) # .y is the second argument, i.e. 'new_measurement$local_path'
+                      if (!is.null(result)) {
+                        result %>%
                           mutate(measurement_id = .x) %>% # .x is the first argument, i.e. 'new_measurement$measurement_id'
                           dbWriteTable(pool.manuscript202505, "observation", ., append = TRUE)
+                      }
                     })
 toc()
 
